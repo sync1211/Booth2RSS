@@ -1,8 +1,0 @@
-<Solution>
-  <Folder Name="/Projektmappenelemente/">
-    <File Path="README.md" />
-  </Folder>
-  <Project Path="Booth2RSS.CLI/Booth2RSS.CLI.csproj" />
-  <Project Path="Booth2RSS.Web/Booth2RSS.Web.csproj" Id="6773435f-8781-41ba-9021-507c384aba66" />
-  <Project Path="Booth2RSS/Booth2RSS.csproj" />
-</Solution>

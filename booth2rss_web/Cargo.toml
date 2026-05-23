@@ -1,0 +1,12 @@
+[package]
+name = "booth2rss_web"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+actix-web = "4.13.0"
+booth2rss = { path = "../booth2rss" }
+lazy_static = "1.5.0"
+once_cell = "1.21.4"
+reqwest = "0.13.2"
+serde = "1.0.228"

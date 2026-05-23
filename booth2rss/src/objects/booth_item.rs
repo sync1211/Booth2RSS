@@ -1,0 +1,109 @@
+use std::fmt;
+use crate::objects::booth_category::BoothCategory;
+use serde::{Deserialize};
+
+#[derive(Deserialize, Debug, Clone)]
+#[serde()]
+pub struct BoothItem {
+    id: i32,
+    name: String,
+    category: BoothCategory,
+    pub is_adult: bool,
+    pub is_end_of_sale: bool,
+    pub is_placeholder: bool,
+    pub is_sold_out: bool,
+    pub is_vrchat: bool,
+    pub minimum_stock: Option<i32>,
+    price: String,
+    thumbnail_image_urls: Vec<String>,
+    url: String
+}
+
+impl BoothItem {
+    pub fn get_description(&self) -> String {
+        let mut content_tags: Vec<&str> = Vec::new();
+
+
+        if self.is_adult   {
+            content_tags.push("[ADULT CONTENT]");
+        }
+
+        if self.is_vrchat {
+            content_tags.push("[VRChat]");
+        }
+
+        if self.is_placeholder {
+            content_tags.push("[PLACEHOLDER]");
+        }
+
+        let mut description = format!("Category: {}\nPrice: {}", self.category.get_name(), self.price);
+        if !content_tags.is_empty() {
+
+            description = format!("{}\n{description}", content_tags.join(" "));
+        }
+
+        if self.is_sold_out  {
+            description.push_str(" (Sold Out)");
+        }
+
+        if self.is_end_of_sale  {
+            description.push_str(" (End Of Sale)");
+        }
+
+        return description;
+	}
+
+    fn get_state_id(&self) -> String {
+        let mut state_id = format!("{};{}", self.id, self.price);
+        
+        if self.is_sold_out {
+            state_id.push_str(";EOS");
+        }
+
+        if self.is_placeholder {
+            state_id.push_str(";PH");
+        }
+
+        return state_id;
+    }
+
+    pub fn as_rss(&self) -> String {
+        let mut display_name = String::new();
+        
+        if self.is_adult {
+            display_name.push_str("🔞 ");
+        }
+        display_name.push_str(&self.name);
+
+        let thumbnail_url = &self.thumbnail_image_urls[0];
+
+        // ID of the current item state
+        // Any change in price or availability will be treated as a new entry by RSS readers
+        let state_id = self.get_state_id();
+
+        let category_name = self.category.get_name();
+        let description = self.get_description();
+        let name = &self.name;
+        let url = &self.url;
+
+        let mut rss = String::new();
+        rss.push_str("<item>");
+        rss.push_str(&format!("<title>{display_name}</title>"));
+        rss.push_str(&format!("<link>{url}</link>"));
+        rss.push_str("<description>");
+        rss.push_str(&description);
+        rss.push_str(&format!("<![CDATA[ <img src=\"{thumbnail_url}\" alt=\"{name}\" title=\"\"/> ]]>"));
+        rss.push_str("</description>");
+        rss.push_str(&format!("<guid>{state_id}</guid>"));
+        rss.push_str(&format!("<category>{category_name}</category>"));
+        rss.push_str("</item>");
+
+        return rss;
+    }
+}
+
+impl fmt::Display for BoothItem {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "[{}]({})", self.name, self.url)
+    }
+}
