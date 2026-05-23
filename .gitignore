@@ -1,0 +1,8 @@
+.vscode
+*/obj/**
+*/bin/**
+/.cr/**
+*/target/**
+booth2rss/target/**
+booth2rss_cli/target/**
+booth2rss_web/target/**

@@ -1,0 +1,11 @@
+@Booth2RSS.Web_HostAddress = http://localhost:5204
+
+GET {{Booth2RSS.Web_HostAddress}}/booth2rss/store
+Accept: application/text
+
+###
+
+GET {{Booth2RSS.Web_HostAddress}}/booth2rss/store?url="https://example.com"
+Accept: application/text
+
+###
