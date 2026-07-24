@@ -1,6 +1,4 @@
 mod utils;
-use reqwest::header::USER_AGENT;
-use reqwest::header::COOKIE;
 use url::Url;
 use substring::Substring;
 
@@ -18,8 +16,6 @@ pub mod objects {
 // Request
 const SELF_USER_AGENT: &str = "Booth2Rss";
 const ADULT_COOKIE: &str = "adult=t";
-
-const ACCEPTED_LANGUAGE_HEADER: &str = "Accept-Language";
 const ACCEPTED_LANGUAGE: &str = "en-US";
 
 // Last page detection
@@ -110,11 +106,11 @@ pub async fn get_booth_store(client: &reqwest::Client, url: &str, max_pages: i32
 
 pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) -> Result<String, HttpResponse> {
     let mut builder = client.get(url.to_string())
-        .header(USER_AGENT, SELF_USER_AGENT)
-        .header(ACCEPTED_LANGUAGE_HEADER, ACCEPTED_LANGUAGE);
+        .header(reqwest::header::USER_AGENT, SELF_USER_AGENT)
+        .header(reqwest::header::ACCEPT_LANGUAGE, ACCEPTED_LANGUAGE);
 
     if allow_adult {
-        builder = builder.header(COOKIE, ADULT_COOKIE);
+        builder = builder.header(reqwest::header::COOKIE, ADULT_COOKIE);
     }
 
     // Request data
