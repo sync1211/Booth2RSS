@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-actix-web = "4.13.0"
-reqwest = "0.13.2"
-serde = { version="1.0.228", features = ["derive"] }
-serde_json = "1.0.149"
+actix-web = "4.14.0"
+reqwest = "0.13.4"
+serde = { version="1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
 substring = "1.4.5"
 url = "2.5.8"

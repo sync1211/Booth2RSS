@@ -5,5 +5,5 @@ edition = "2024"
 
 [dependencies]
 booth2rss = { path = "../booth2rss" }
-tokio =  { version="1.49.0", features = ["rt-multi-thread", "macros"] }
-reqwest = "0.13.2"
+tokio =  { version="1.53.1", features = ["rt-multi-thread", "macros"] }
+reqwest = "0.13.4"
