@@ -1,5 +1,5 @@
 use std::fmt;
-use crate::objects::booth_category::BoothCategory;
+use crate::{objects::booth_category::BoothCategory, utils::sanitize_xml};
 use serde::{Deserialize};
 
 #[derive(Deserialize, Debug, Clone)]
@@ -50,7 +50,7 @@ impl BoothItem {
             description.push_str(" (End Of Sale)");
         }
 
-        return description;
+        return sanitize_xml(&description);
 	}
 
     fn get_state_id(&self) -> String {
@@ -75,6 +75,8 @@ impl BoothItem {
         }
         display_name.push_str(&self.name);
 
+        let display_name_safe = sanitize_xml(&display_name);
+
         let thumbnail_url = &self.thumbnail_image_urls[0];
 
         // ID of the current item state
@@ -83,12 +85,12 @@ impl BoothItem {
 
         let category_name = self.category.get_name();
         let description = self.get_description();
-        let name = &self.name;
+        let name = sanitize_xml(&self.name);
         let url = &self.url;
 
         let mut rss = String::new();
         rss.push_str("<item>");
-        rss.push_str(&format!("<title>{display_name}</title>"));
+        rss.push_str(&format!("<title>{display_name_safe}</title>"));
         rss.push_str(&format!("<link>{url}</link>"));
         rss.push_str("<description>");
         rss.push_str(&description);
