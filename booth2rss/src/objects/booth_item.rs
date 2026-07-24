@@ -13,7 +13,8 @@ pub struct BoothItem {
     pub is_sold_out: bool,
     pub is_vrchat: bool,
     pub minimum_stock: Option<i32>,
-    price: String,
+    pub price: String,
+    pub local_price: Option<String>,
     thumbnail_image_urls: Vec<String>,
     url: String
 }
@@ -36,8 +37,11 @@ impl BoothItem {
         }
 
         let mut description = format!("Category: {}\nPrice: {}", self.category.get_name(), self.price);
-        if !content_tags.is_empty() {
+        if let Some(lprice) = &self.local_price {
+            description.push_str(&format!(" (~ {lprice})"));
+        }
 
+        if !content_tags.is_empty() {
             description = format!("{}\n{description}", content_tags.join(" "));
         }
 

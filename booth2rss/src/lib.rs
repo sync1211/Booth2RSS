@@ -2,6 +2,10 @@ mod utils;
 use url::Url;
 use substring::Substring;
 
+mod currency_exchange;
+use currency_exchange::get_exchange_rate;
+
+use crate::currency_exchange::convert_item_price;
 use crate::objects::booth_item::BoothItem;
 use crate::objects::booth_store::BoothStore;
 
@@ -43,7 +47,10 @@ const ITEM_DATA_END: &str = "\"";
 
 
 pub struct Booth2RSSClient {
-    client: reqwest::Client
+    client: reqwest::Client,
+    pub convert_currency: bool,
+    pub currency_target: String,
+    pub currency_source: String
 }
 
 impl Booth2RSSClient {
@@ -57,7 +64,12 @@ impl Booth2RSSClient {
     }
 
     pub fn with_client(client: reqwest::Client) -> Booth2RSSClient {
-        return Booth2RSSClient{client};
+        return Booth2RSSClient{
+            client,
+            convert_currency: true,
+            currency_target: "EUR".to_string(),
+            currency_source: "JPY".to_string(),
+        };
     }
 
     pub async fn get_booth_store(&self, url: &str, max_pages: i32, unblur_nsfw: bool) -> Result<BoothStore, BoothRequestError> {
@@ -66,6 +78,7 @@ impl Booth2RSSClient {
         let mut url_obj = match Url::parse(url) {
             Ok(url) => url,
             Err(e) => return Err(BoothRequestError::InvalidUrl(e.to_string()))
+
         };
         
         match url_obj.domain() {
@@ -73,8 +86,7 @@ impl Booth2RSSClient {
                 return Err(BoothRequestError::NotBoothUrl("Not a booth.pm URL!".to_string()))
             },
             None => return Err(BoothRequestError::InvalidUrl("Missing domain in URL!".to_string()))
-        }
-
+        };
 
         let url_path = url_obj.path();
         if !(url_path.contains("items") || url_path.contains("item_lists")) {
@@ -84,8 +96,21 @@ impl Booth2RSSClient {
         let mut page_count = -1;
         let mut items: Vec<BoothItem> = Vec::new();
 
+        // Get exchange rate for currency conversion
+        //TODO: Make target currency configurable!
+        let exchange_res  = get_exchange_rate(&self.client, &self.currency_source, &self.currency_target).await;
+        
+        let exchange_rate = match &exchange_res {
+            Ok(exc) => exc.rate,
+            Err(_) => -1.0
+        };
+
+        if let Err(e) = &exchange_res {
+            println!("ERROR: Unable to get currency exchange rate: {e}");
+        }
+
         let mut i = 1;
-        loop {        
+        loop {
             println!("Fetching page {i}/{page_count}...");
             url_obj.set_query(Some(&format!("page={i}")));
 
@@ -104,9 +129,10 @@ impl Booth2RSSClient {
                     println!("Detected maximum page count {}", page_count);
                 }
             }
-            
+        
+        
             // Get items from content
-            let new_items = get_items_from_content(&content);
+            let new_items = get_items_from_content(&content, exchange_rate);
             let new_items_iter = new_items.into_iter();
             
             // Add new items to item list
@@ -238,7 +264,7 @@ fn get_page_count_from_content(content: &String) -> i32 {
     };
 }
 
-fn get_items_from_content(content: &String) -> Vec<BoothItem> {
+fn get_items_from_content(content: &String, exchange_rate: f32) -> Vec<BoothItem> {
     let mut item_list: Vec<BoothItem> = Vec::new();
     let mut offset  = 0;
     let mut item_result;
@@ -255,13 +281,17 @@ fn get_items_from_content(content: &String) -> Vec<BoothItem> {
         // Deserialize
         let item_result = serde_json::from_str::<BoothItem>(item_data_string.trim());
 
-        let item = match item_result {
+        let mut item = match item_result {
             Ok(i) => i,
             Err(e) => {
                 println!("Unable to deserialize item: {}", e);
                 continue;
             }
         };
+
+        if exchange_rate != -1.0 {
+            item.local_price = convert_item_price(&item.price, exchange_rate);
+        }
 
         item_list.push(item);
     }
