@@ -4,7 +4,9 @@ use substring::Substring;
 
 use crate::objects::booth_item::BoothItem;
 use crate::objects::booth_store::BoothStore;
-use actix_web::HttpResponse;
+
+mod errors;
+use errors::BoothRequestError;
 
 pub mod objects {
     pub mod booth_item;
@@ -40,17 +42,19 @@ const ITEM_DATA_START: &str = "data-item=\"";
 const ITEM_DATA_END: &str = "\"";
 
 
-pub async fn get_booth_store(client: &reqwest::Client, url: &str, max_pages: i32, unblur_nsfw: bool) -> Result<BoothStore, HttpResponse> {
+pub async fn get_booth_store(client: &reqwest::Client, url: &str, max_pages: i32, unblur_nsfw: bool) -> Result<BoothStore, BoothRequestError> {
     
     // Url checks
     let mut url_obj = match Url::parse(url) {
         Ok(url) => url,
-        Err(e) => return Err(HttpResponse::InternalServerError().body(e.to_string()))
+        Err(e) => return Err(BoothRequestError::InvalidUrl(e.to_string()))
     };
     
     match url_obj.domain() {
-        Some(domain) => if !domain.ends_with(".booth.pm") { return Err(HttpResponse::InternalServerError().body(format!("Not a booth.pm URL: {domain}"))) },
-        None => return Err(HttpResponse::InternalServerError().body("Missing domain".to_string()))
+        Some(domain) => if !domain.ends_with(".booth.pm") {
+            return Err(BoothRequestError::NotBoothUrl("Not a booth.pm URL!".to_string()))
+        },
+        None => return Err(BoothRequestError::InvalidUrl("Missing domain in URL!".to_string()))
     }
 
 
@@ -77,7 +81,10 @@ pub async fn get_booth_store(client: &reqwest::Client, url: &str, max_pages: i32
         // Detect number of total pages
         if page_count == -1 {
             page_count = get_page_count_from_content(&content);
-            println!("Detected maximum page count {}", page_count);
+            
+            if page_count != -1 {
+                println!("Detected maximum page count {}", page_count);
+            }
         }
         
         // Get items from content
@@ -104,7 +111,7 @@ pub async fn get_booth_store(client: &reqwest::Client, url: &str, max_pages: i32
     }
 }
 
-pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) -> Result<String, HttpResponse> {
+pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) -> Result<String, BoothRequestError> {
     let mut builder = client.get(url.to_string())
         .header(reqwest::header::USER_AGENT, SELF_USER_AGENT)
         .header(reqwest::header::ACCEPT_LANGUAGE, ACCEPTED_LANGUAGE);
@@ -120,7 +127,7 @@ pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) ->
         Ok(resp) => resp,
         Err(e) => {
             dbg!(&e);
-            return Err(HttpResponse::InternalServerError().body(format!("Request failed: {e}")));
+            return Err(BoothRequestError::HttpError(500, format!("Request failed: {e}")));
         },
     };
 
@@ -128,11 +135,12 @@ pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) ->
     println!("Status: {status}");
 
     if !status.is_success() {
-        return Err(HttpResponse::InternalServerError()
-            .body(status
-                    .canonical_reason()
-                    .unwrap_or("Unknown")
-                    .to_string()
+        return Err(BoothRequestError::HttpError(
+            status.as_u16(),
+            status
+                .canonical_reason()
+                .unwrap_or("Unknown Error")
+                .to_string()
             )
         );
     }
@@ -141,7 +149,7 @@ pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) ->
         Ok(response_text) => Ok(response_text),
         Err(e) => {
             dbg!(e);
-            return Err(HttpResponse::InternalServerError().body("Error to reading response text".to_string()));
+            return Err(BoothRequestError::ParseError("Error to reading response text".to_string()));
         },
     }
 }
@@ -206,7 +214,8 @@ fn get_page_count_from_content(content: &String) -> i32 {
         Err(error) => {
             println!("Integer parse error: {}", error);
             println!("Tried to parse the following string: '{}'", page_string);
-            panic!();
+            
+            return -1;
         }
     };
 }

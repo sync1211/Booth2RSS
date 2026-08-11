@@ -3,7 +3,6 @@ use once_cell::sync::Lazy;
 
 use actix_web::{get, web, App, HttpServer, HttpResponse};
 use serde::Deserialize;
-use lazy_static::lazy_static;
 
 extern crate booth2rss;
 
@@ -13,6 +12,11 @@ use cache::ResponseCache;
 static CACHE: Lazy<Arc<Mutex<ResponseCache>>> = Lazy::new(|| {
     Arc::new(Mutex::new(ResponseCache::with_defaults()))
 });
+
+static CLIENT: once_cell::sync::Lazy<reqwest::Client> = once_cell::sync::Lazy::new(|| {
+        reqwest::Client::new()
+});
+
 
 #[derive(Deserialize)]
 #[serde(default)]
@@ -63,10 +67,6 @@ async fn get_store(store_data: web::Query<StoreParams>) -> HttpResponse {
     if let Ok(cache) = CACHE.lock()
         && let Some(rss) = cache.get_active_value(&cache_key) {
         return HttpResponse::Ok().body(rss.to_owned());
-    }
-
-    lazy_static!{
-        static ref CLIENT: reqwest::Client = reqwest::Client::new();
     }
 
     let store_res = booth2rss::get_booth_store(&CLIENT, &url, store_data.limit, store_data.unblur_nsfw).await;
