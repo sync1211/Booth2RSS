@@ -25,7 +25,7 @@ async fn main() {
             !params.include_unavailable,
             !params.allow_nsfw,
             params.vrc_only,
-            params.limit
+            0
         ),
         Err(BoothRequestError::HttpError(status, reason)) => format!("ERROR: {} - {}", status, reason),
         Err(e) => format!("ERROR: {:?}", e)
