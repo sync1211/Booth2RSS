@@ -23,7 +23,7 @@ static CLIENT: once_cell::sync::Lazy<reqwest::Client> = once_cell::sync::Lazy::n
 #[serde(default)]
 struct StoreParams {
     url: Option<String>,
-    limit: i32,
+    max_pages: i32,
     filter_unavailable: bool,
     unblur_nsfw: bool,
     allow_nsfw: bool,
@@ -34,7 +34,7 @@ impl Default for StoreParams {
     fn default() -> Self {
         StoreParams {
             url: None,
-            limit: 10,
+            max_pages: 10,
             filter_unavailable: true,
             unblur_nsfw: false,
             allow_nsfw: false,
@@ -56,7 +56,7 @@ async fn get_store(store_data: web::Query<StoreParams>) -> HttpResponse {
     
     let cache_key = format!(
         "{}{}{}{}{}-{}",
-        store_data.limit,
+        store_data.max_pages,
         store_data.unblur_nsfw,
         store_data.filter_unavailable,
         store_data.allow_nsfw,
@@ -70,7 +70,7 @@ async fn get_store(store_data: web::Query<StoreParams>) -> HttpResponse {
         return HttpResponse::Ok().body(rss.to_owned());
     }
 
-    let store_res = booth2rss::get_booth_store(&CLIENT, &url, store_data.limit, store_data.unblur_nsfw).await;
+    let store_res = booth2rss::get_booth_store(&CLIENT, &url, store_data.max_pages, store_data.unblur_nsfw).await;
 
     let store = match store_res {
         Ok(s) => s,
