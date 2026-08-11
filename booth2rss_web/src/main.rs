@@ -1,10 +1,11 @@
 use std::sync::{Arc, Mutex};
 use once_cell::sync::Lazy;
 
-use actix_web::{get, web, App, HttpServer, HttpResponse};
+use actix_web::{App, HttpResponse, HttpServer, get, http::StatusCode, web};
 use serde::Deserialize;
 
 extern crate booth2rss;
+use booth2rss::errors::BoothRequestError;
 
 mod cache;
 use cache::ResponseCache;
@@ -73,9 +74,16 @@ async fn get_store(store_data: web::Query<StoreParams>) -> HttpResponse {
 
     let store = match store_res {
         Ok(s) => s,
-        Err(status) => {          
-            return status;
-        }
+        Err(BoothRequestError::InvalidUrl(s)) => return HttpResponse::InternalServerError().body(s),
+        Err(BoothRequestError::NotBoothUrl(s)) => return HttpResponse::InternalServerError().body(s),
+        Err(BoothRequestError::HttpError(status_code, reason)) => {
+            let status = StatusCode::from_u16(status_code)
+                .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+
+            return HttpResponse::build(status)
+                .body(reason);
+        },
+        Err(BoothRequestError::ParseError(s)) =>  return HttpResponse::InternalServerError().body(s)
     };
 
     let store_rss = store.as_rss(store_data.filter_unavailable, !store_data.allow_nsfw, store_data.vrc_only, 15);

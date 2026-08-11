@@ -1,6 +1,7 @@
 use std::env;
 
 extern crate booth2rss;
+use booth2rss::errors::BoothRequestError;
 
 mod argparse;
 
@@ -26,7 +27,8 @@ async fn main() {
             params.vrc_only,
             params.limit
         ),
-        Err(response) => format!("ERROR: {} - {:#?}", response.status().as_u16(), response.body())
+        Err(BoothRequestError::HttpError(status, reason)) => format!("ERROR: {} - {}", status, reason),
+        Err(e) => format!("ERROR: {:?}", e)
     };
 
     println!("{}", result);

@@ -5,7 +5,7 @@ use substring::Substring;
 use crate::objects::booth_item::BoothItem;
 use crate::objects::booth_store::BoothStore;
 
-mod errors;
+pub mod errors;
 use errors::BoothRequestError;
 
 pub mod objects {
@@ -149,7 +149,7 @@ pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) ->
         Ok(response_text) => Ok(response_text),
         Err(e) => {
             dbg!(e);
-            return Err(BoothRequestError::ParseError("Error to reading response text".to_string()));
+            return Err(BoothRequestError::ParseError("Error reading response text".to_string()));
         },
     }
 }
