@@ -65,7 +65,6 @@ name = "booth2rss_cli"
 version = "0.1.0"
 dependencies = [
  "booth2rss",
- "reqwest",
  "tokio",
 ]
 

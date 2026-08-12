@@ -42,78 +42,96 @@ const ITEM_DATA_START: &str = "data-item=\"";
 const ITEM_DATA_END: &str = "\"";
 
 
-pub async fn get_booth_store(client: &reqwest::Client, url: &str, max_pages: i32, unblur_nsfw: bool) -> Result<BoothStore, BoothRequestError> {
-    
-    // Url checks
-    let mut url_obj = match Url::parse(url) {
-        Ok(url) => url,
-        Err(e) => return Err(BoothRequestError::InvalidUrl(e.to_string()))
-    };
-    
-    match url_obj.domain() {
-        Some(domain) => if !domain.ends_with(".booth.pm") {
-            return Err(BoothRequestError::NotBoothUrl("Not a booth.pm URL!".to_string()))
-        },
-        None => return Err(BoothRequestError::InvalidUrl("Missing domain in URL!".to_string()))
+pub struct Booth2RSSClient {
+    client: reqwest::Client
+}
+
+impl Booth2RSSClient {
+    pub fn with_defaults() -> Booth2RSSClient {
+        return Booth2RSSClient::with_client(
+            reqwest::Client::builder()
+            .user_agent(SELF_USER_AGENT)
+            .build()
+            .unwrap_or(reqwest::Client::new())
+        );
     }
 
-
-    let url_path = url_obj.path();
-    if !(url_path.contains("items") || url_path.contains("item_lists")) {
-        url_obj.set_path(&format!("{url_path}/items"));
+    pub fn with_client(client: reqwest::Client) -> Booth2RSSClient {
+        return Booth2RSSClient{client};
     }
 
-    let mut page_count = -1;
-    let mut items: Vec<BoothItem> = Vec::new();
-
-    let mut i = 1;
-    loop {        
-        println!("Fetching page {i}/{page_count}...");
-        url_obj.set_query(Some(&format!("page={i}")));
-
-        let result = get_page(client, &url_obj, unblur_nsfw).await;
-
-        let content = match result {
-            Ok(response) => response,
-            Err(status) => return Err(status),
+    pub async fn get_booth_store(&self, url: &str, max_pages: i32, unblur_nsfw: bool) -> Result<BoothStore, BoothRequestError> {
+    
+        // Url checks
+        let mut url_obj = match Url::parse(url) {
+            Ok(url) => url,
+            Err(e) => return Err(BoothRequestError::InvalidUrl(e.to_string()))
         };
+        
+        match url_obj.domain() {
+            Some(domain) => if !domain.ends_with(".booth.pm") {
+                return Err(BoothRequestError::NotBoothUrl("Not a booth.pm URL!".to_string()))
+            },
+            None => return Err(BoothRequestError::InvalidUrl("Missing domain in URL!".to_string()))
+        }
 
-        // Detect number of total pages
-        if page_count == -1 {
-            page_count = get_page_count_from_content(&content);
-            
-            if page_count != -1 {
-                println!("Detected maximum page count {}", page_count);
+
+        let url_path = url_obj.path();
+        if !(url_path.contains("items") || url_path.contains("item_lists")) {
+            url_obj.set_path(&format!("{url_path}items"));
+        }
+
+        let mut page_count = -1;
+        let mut items: Vec<BoothItem> = Vec::new();
+
+        let mut i = 1;
+        loop {        
+            println!("Fetching page {i}/{page_count}...");
+            url_obj.set_query(Some(&format!("page={i}")));
+
+            let result = get_page(&self.client, &url_obj, unblur_nsfw).await;
+
+            let content = match result {
+                Ok(response) => response,
+                Err(status) => return Err(status),
+            };
+
+            // Detect number of total pages
+            if page_count == -1 {
+                page_count = get_page_count_from_content(&content);
+                
+                if page_count != -1 {
+                    println!("Detected maximum page count {}", page_count);
+                }
             }
-        }
-        
-        // Get items from content
-        let new_items = get_items_from_content(&content);
-        let new_items_iter = new_items.into_iter();
-        
-        // Add new items to item list
-        let mut new_items_count = 0;
-        for new_item in new_items_iter {
-            //println!("Got: {new_item}");
-            items.push(new_item);
-            new_items_count += 1;
-        }
-        println!("New items: {}", new_items_count);
+            
+            // Get items from content
+            let new_items = get_items_from_content(&content);
+            let new_items_iter = new_items.into_iter();
+            
+            // Add new items to item list
+            let mut new_items_count = 0;
+            for new_item in new_items_iter {
+                //println!("Got: {new_item}");
+                items.push(new_item);
+                new_items_count += 1;
+            }
+            println!("New items: {}", new_items_count);
 
-        // Exit condition
-        if new_items_count == 0 || i >= max_pages || i >= page_count {
-            println!("Last page reached!");
-            url_obj.set_query(None);
-            return Ok(create_store_from_content(&content, url_obj.as_ref(), items));
-        }
+            // Exit condition
+            if new_items_count == 0 || i >= max_pages || i >= page_count {
+                println!("Last page reached!");
+                url_obj.set_query(None);
+                return Ok(create_store_from_content(&content, url_obj.as_ref(), items));
+            }
 
-        i += 1;
+            i += 1;
+        }
     }
 }
 
 pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) -> Result<String, BoothRequestError> {
     let mut builder = client.get(url.to_string())
-        .header(reqwest::header::USER_AGENT, SELF_USER_AGENT)
         .header(reqwest::header::ACCEPT_LANGUAGE, ACCEPTED_LANGUAGE);
 
     if allow_adult {

@@ -289,8 +289,8 @@ dependencies = [
  "actix-web",
  "booth2rss",
  "once_cell",
- "reqwest",
  "serde",
+ "tokio",
 ]
 
 [[package]]

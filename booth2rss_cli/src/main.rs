@@ -12,9 +12,8 @@ async fn main() {
         None => return
     };
 
-    let client = reqwest::Client::new();
-    let store_res = booth2rss::get_booth_store(
-        &client,
+    let client = booth2rss::Booth2RSSClient::with_defaults();
+    let store_res = client.get_booth_store(
         &params.url,
         params.max_pages,
         params.unblur_nsfw
