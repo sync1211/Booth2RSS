@@ -6,7 +6,7 @@ use actix_web::{App, HttpResponse, HttpServer, get, http::StatusCode, web};
 use serde::Deserialize;
 
 extern crate booth2rss;
-use booth2rss::{Booth2RSSClient, errors::BoothRequestError};
+use booth2rss::{BoothClient, errors::BoothRequestError};
 
 mod cache;
 use cache::ResponseCache;
@@ -46,7 +46,7 @@ impl Default for StoreParams {
 }
 
 #[get("/booth2rss/store")]
-async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2rss::Booth2RSSClient>) -> HttpResponse {
+async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2rss::BoothClient>) -> HttpResponse {
     let url = match &store_data.url {
         Some(url) => url.to_owned(),
         None => return HttpResponse::UnprocessableEntity().body("No url provided".to_string())
@@ -103,7 +103,7 @@ async fn main() -> std::io::Result<()> {
 
     let config_data = read_config(CONFIG_PATH);
 
-    let mut client = Booth2RSSClient::with_defaults();
+    let mut client = BoothClient::with_defaults();
     client.set_currency_conversion_options(
         config_data.convert_currency,
         &config_data.currency_source,

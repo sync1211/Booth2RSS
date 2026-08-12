@@ -46,7 +46,7 @@ const ITEM_DATA_START: &str = "data-item=\"";
 const ITEM_DATA_END: &str = "\"";
 
 #[derive(Clone)]
-pub struct Booth2RSSClient {
+pub struct BoothClient {
     client: reqwest::Client,
     convert_currency: bool,
     currency_target: String,
@@ -54,9 +54,9 @@ pub struct Booth2RSSClient {
 }
 
 
-impl Booth2RSSClient {
-    pub fn with_defaults() -> Booth2RSSClient {
-        return Booth2RSSClient::with_client(
+impl BoothClient {
+    pub fn with_defaults() -> BoothClient {
+        return BoothClient::with_client(
             reqwest::Client::builder()
             .user_agent(SELF_USER_AGENT)
             .build()
@@ -64,8 +64,8 @@ impl Booth2RSSClient {
         );
     }
 
-    pub fn with_client(client: reqwest::Client) -> Booth2RSSClient {
-        return Booth2RSSClient{
+    pub fn with_client(client: reqwest::Client) -> BoothClient {
+        return BoothClient{
             client,
             convert_currency: true,
             currency_target: "EUR".to_string(),

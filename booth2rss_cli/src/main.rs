@@ -12,7 +12,7 @@ async fn main() {
         None => return
     };
 
-    let mut client = booth2rss::Booth2RSSClient::with_defaults();
+    let mut client = booth2rss::BoothClient::with_defaults();
     client.set_currency_conversion_options(params.convert_currency, "JPY", &params.convert_target);
     
     let store_res = client.get_booth_store(
