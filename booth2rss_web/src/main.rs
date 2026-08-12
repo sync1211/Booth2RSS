@@ -1,4 +1,5 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
+use tokio::sync::Mutex;
 use once_cell::sync::Lazy;
 
 use actix_web::{App, HttpResponse, HttpServer, get, http::StatusCode, web};
@@ -14,8 +15,8 @@ static CACHE: Lazy<Arc<Mutex<ResponseCache>>> = Lazy::new(|| {
     Arc::new(Mutex::new(ResponseCache::with_defaults()))
 });
 
-static CLIENT: once_cell::sync::Lazy<reqwest::Client> = once_cell::sync::Lazy::new(|| {
-        reqwest::Client::new()
+static CLIENT: once_cell::sync::Lazy<booth2rss::Booth2RSSClient> = once_cell::sync::Lazy::new(|| {
+        booth2rss::Booth2RSSClient::with_defaults()
 });
 
 
@@ -65,12 +66,13 @@ async fn get_store(store_data: web::Query<StoreParams>) -> HttpResponse {
     );
 
     // Get value from cache if it's still valid
-    if let Ok(cache) = CACHE.lock()
-        && let Some(rss) = cache.get_active_value(&cache_key) {
-        return HttpResponse::Ok().body(rss.to_owned());
+    {
+        let cache = CACHE.lock().await;
+        if let Some(rss) = cache.get_active_value(&cache_key) {
+            return HttpResponse::Ok().body(rss.to_owned());
+        }
     }
-
-    let store_res = booth2rss::get_booth_store(&CLIENT, &url, store_data.max_pages, store_data.unblur_nsfw).await;
+    let store_res = CLIENT.get_booth_store(&url, store_data.max_pages, store_data.unblur_nsfw).await;
 
     let store = match store_res {
         Ok(s) => s,
@@ -89,9 +91,8 @@ async fn get_store(store_data: web::Query<StoreParams>) -> HttpResponse {
     let store_rss = store.as_rss(store_data.filter_unavailable, !store_data.allow_nsfw, store_data.vrc_only, 15);
 
     // Save value to cache
-    if let Ok(mut c) = CACHE.lock() {
-        c.add_item(cache_key.to_string(), store_rss.to_owned());
-    }
+    let mut cache = CACHE.lock().await;
+    cache.add_item(cache_key.to_string(), store_rss.to_owned());
 
     return HttpResponse::Ok().body(store_rss);
 }

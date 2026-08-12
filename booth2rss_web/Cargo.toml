@@ -8,3 +8,4 @@ actix-web = "4.14.0"
 booth2rss = { path = "../booth2rss" }
 once_cell = "1.21.4"
 serde = "1.0.229"
+tokio = "1.53.1"
