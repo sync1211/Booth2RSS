@@ -3,7 +3,6 @@ use crate::{objects::booth_category::BoothCategory, utils::sanitize_xml};
 use serde::{Deserialize};
 
 #[derive(Deserialize, Debug, Clone)]
-#[serde()]
 pub struct BoothItem {
     id: i32,
     name: String,
@@ -77,7 +76,7 @@ impl BoothItem {
 
         let display_name_safe = sanitize_xml(&display_name);
 
-        let thumbnail_url = &self.thumbnail_image_urls[0];
+        let thumbnail_url = self.thumbnail_image_urls.first().map_or("", |x| x);
 
         // ID of the current item state
         // Any change in price or availability will be treated as a new entry by RSS readers

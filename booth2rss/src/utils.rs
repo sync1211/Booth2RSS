@@ -55,11 +55,11 @@ pub fn get_value_between_snippets_offset(content: &String, start: &str, end: &st
 
 pub fn sanitize_xml(input: &str) -> String {
     return input
+        .replace("&", "&amp;")
         .replace("\"", "&quot;")
         .replace("'", "&apos;")
         .replace("<", "&lt;")
-        .replace(">", "&gt;")
-        .replace("&", "&amp;");
+        .replace(">", "&gt;");
 }
 
 
