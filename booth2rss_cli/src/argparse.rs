@@ -23,7 +23,7 @@ pub fn parse_arguments(args: Args) -> Option<CmdParams> {
         convert_target: String::new()
     };
 
-    for arg in args.into_iter() {
+    for arg in args.skip(1).into_iter() {
         match arg.as_str() {
             "--unblur-nsfw" => cmd_params.unblur_nsfw = true,
             "--allow-nsfw" => cmd_params.allow_nsfw = true,
