@@ -84,16 +84,15 @@ impl BoothItem {
 
         let category_name = self.category.get_name();
         let description = self.get_description();
-        let name = sanitize_xml(&self.name);
         let url = &self.url;
 
         let mut rss = String::new();
         rss.push_str("<item>");
         rss.push_str(&format!("<title>{display_name_safe}</title>"));
         rss.push_str(&format!("<link>{url}</link>"));
+        rss.push_str(&format!("<enclosure url=\"{thumbnail_url}\" type=\"image/jpeg\" length=\"0\"/>"));
         rss.push_str("<description>");
         rss.push_str(&description);
-        rss.push_str(&format!("<![CDATA[ <img src=\"{thumbnail_url}\" alt=\"{name}\" title=\"\"/> ]]>"));
         rss.push_str("</description>");
         rss.push_str(&format!("<guid>{state_id}</guid>"));
         rss.push_str(&format!("<category>{category_name}</category>"));
