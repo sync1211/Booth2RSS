@@ -6,7 +6,7 @@ A tool for creating RSS feeds from Booth.pm store pages.
 
 ### CLI
 ```bash
-Booth2RSS.CLI <store-url> (--unblur-nsfw --allow-nsfw --include_unavailable --vrc-only --max-pages=<max-pages>)
+Booth2RSS.CLI <store-url> (--unblur-nsfw --allow-nsfw --include_unavailable --vrc-only --max-pages=<max-pages> --convert-currency=<abbreviated-currency-name>)
 ```
 
 ### Web
