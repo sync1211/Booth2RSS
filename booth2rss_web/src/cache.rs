@@ -26,6 +26,15 @@ impl ResponseCache {
         }
     }
 
+    pub fn set_max_age(&mut self, max_age: Duration) {
+        self.max_age = max_age;
+    }
+
+    pub fn set_max_size(&mut self, max_size: usize) {
+        self.max_size = max_size;
+        // self.cache_dict.try_reserve(max_size).expect(format!("Could not allocate memory for cache dict of size {}", max_size));
+    }
+
     pub fn add_item(&mut self, key: String, value: String) {
         let entry = CachedValue {
             value,

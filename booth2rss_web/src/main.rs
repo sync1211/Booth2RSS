@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 use tokio::sync::Mutex;
 use once_cell::sync::Lazy;
 
@@ -6,19 +6,20 @@ use actix_web::{App, HttpResponse, HttpServer, get, http::StatusCode, web};
 use serde::Deserialize;
 
 extern crate booth2rss;
-use booth2rss::errors::BoothRequestError;
+use booth2rss::{Booth2RSSClient, errors::BoothRequestError};
 
 mod cache;
 use cache::ResponseCache;
 
+use crate::config_reader::read_config;
+
+mod config_reader;
+
+const CONFIG_PATH: &str = "./config.json";
+
 static CACHE: Lazy<Arc<Mutex<ResponseCache>>> = Lazy::new(|| {
     Arc::new(Mutex::new(ResponseCache::with_defaults()))
 });
-
-static CLIENT: once_cell::sync::Lazy<booth2rss::Booth2RSSClient> = once_cell::sync::Lazy::new(|| {
-        booth2rss::Booth2RSSClient::with_defaults()
-});
-
 
 #[derive(Deserialize)]
 #[serde(default)]
@@ -45,7 +46,7 @@ impl Default for StoreParams {
 }
 
 #[get("/booth2rss/store")]
-async fn get_store(store_data: web::Query<StoreParams>) -> HttpResponse {
+async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2rss::Booth2RSSClient>) -> HttpResponse {
     let url = match &store_data.url {
         Some(url) => url.to_owned(),
         None => return HttpResponse::UnprocessableEntity().body("No url provided".to_string())
@@ -72,7 +73,7 @@ async fn get_store(store_data: web::Query<StoreParams>) -> HttpResponse {
             return HttpResponse::Ok().body(rss.to_owned());
         }
     }
-    let store_res = CLIENT.get_booth_store(&url, store_data.max_pages, store_data.unblur_nsfw).await;
+    let store_res = client.get_booth_store(&url, store_data.max_pages, store_data.unblur_nsfw).await;
 
     let store = match store_res {
         Ok(s) => s,
@@ -99,9 +100,27 @@ async fn get_store(store_data: web::Query<StoreParams>) -> HttpResponse {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new()
+
+    let config_data = read_config(CONFIG_PATH);
+
+    let mut client = Booth2RSSClient::with_defaults();
+    client.set_currency_conversion_options(
+        config_data.convert_currency,
+        &config_data.currency_source,
+        &config_data.currency_target,
+    );
+
+    {
+        let mut cache = CACHE.lock().await;
+        cache.set_max_size(config_data.cache_size);
+        cache.set_max_age(Duration::from_mins(config_data.cache_minutes));
+    }
+
+    HttpServer::new(move || {
+        App::new()
+        .app_data(web::Data::new(client.clone()))
         .service(get_store)
-    )
+    })
         .bind(("0.0.0.0", 8080))?
         .run()
         .await

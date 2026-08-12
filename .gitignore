@@ -6,3 +6,4 @@
 booth2rss/target/**
 booth2rss_cli/target/**
 booth2rss_web/target/**
+booth2rss_web/config.json

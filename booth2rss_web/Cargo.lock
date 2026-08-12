@@ -290,6 +290,7 @@ dependencies = [
  "booth2rss",
  "once_cell",
  "serde",
+ "serde_json",
  "tokio",
 ]
 

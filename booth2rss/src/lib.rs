@@ -45,13 +45,14 @@ const STORE_ICON_END: &str = ")";
 const ITEM_DATA_START: &str = "data-item=\"";
 const ITEM_DATA_END: &str = "\"";
 
-
+#[derive(Clone)]
 pub struct Booth2RSSClient {
     client: reqwest::Client,
-    pub convert_currency: bool,
-    pub currency_target: String,
-    pub currency_source: String
+    convert_currency: bool,
+    currency_target: String,
+    currency_source: String
 }
+
 
 impl Booth2RSSClient {
     pub fn with_defaults() -> Booth2RSSClient {
@@ -70,6 +71,12 @@ impl Booth2RSSClient {
             currency_target: "EUR".to_string(),
             currency_source: "JPY".to_string(),
         };
+    }
+
+    pub fn set_currency_conversion_options(&mut self, enabled: bool, source: &str, target: &str) {
+        self.convert_currency = enabled;
+        self.currency_source = source.to_string();
+        self.currency_target = target.to_string();
     }
 
     pub async fn get_booth_store(&self, url: &str, max_pages: i32, unblur_nsfw: bool) -> Result<BoothStore, BoothRequestError> {
@@ -155,6 +162,9 @@ impl Booth2RSSClient {
         }
     }
 }
+
+
+
 
 pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) -> Result<String, BoothRequestError> {
     let mut builder = client.get(url.to_string())

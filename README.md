@@ -20,3 +20,9 @@ Optional arguments:
 * `unblur_nsfw=true|false`: Disable the 18+ placeholder image on NSFW items to show the actual thumbnail.
 * `vrc_only=true|false`: Only show VRChat items
 * `filter_unavailable=true|false`: Hide out-of-stock or discontinued items from the feed. (Defaults to `true`)
+
+
+## Web configuration
+
+A default configuration can be found in`config.json.example`.
+To modify the configuration, copy the file to `config.json`.
