@@ -29,7 +29,7 @@ async fn main() {
             0
         ),
         Err(BoothRequestError::HttpError(status, reason)) => format!("ERROR: {} - {}", status, reason),
-        Err(e) => format!("ERROR: {:?}", e)
+        Err(e) => format!("ERROR: {}", e)
     };
 
     println!("{}", result);

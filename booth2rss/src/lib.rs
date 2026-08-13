@@ -90,9 +90,9 @@ impl BoothClient {
         
         match url_obj.domain() {
             Some(domain) => if !domain.ends_with(".booth.pm") {
-                return Err(BoothRequestError::NotBoothUrl("Not a booth.pm URL!".to_string()))
+                return Err(BoothRequestError::NotBoothUrl())
             },
-            None => return Err(BoothRequestError::InvalidUrl("Missing domain in URL!".to_string()))
+            None => return Err(BoothRequestError::InvalidUrl("Missing domain!".to_string()))
         };
 
         let url_path = url_obj.path();

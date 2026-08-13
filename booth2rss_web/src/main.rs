@@ -77,8 +77,6 @@ async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2
 
     let store = match store_res {
         Ok(s) => s,
-        Err(BoothRequestError::InvalidUrl(s)) => return HttpResponse::InternalServerError().body(s),
-        Err(BoothRequestError::NotBoothUrl(s)) => return HttpResponse::InternalServerError().body(s),
         Err(BoothRequestError::HttpError(status_code, reason)) => {
             let status = StatusCode::from_u16(status_code)
                 .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
@@ -86,7 +84,7 @@ async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2
             return HttpResponse::build(status)
                 .body(reason);
         },
-        Err(BoothRequestError::ParseError(s)) =>  return HttpResponse::InternalServerError().body(s)
+        Err(e) => return HttpResponse::InternalServerError().body(e.to_string())
     };
 
     let store_rss = store.as_rss(store_data.filter_unavailable, !store_data.allow_nsfw, store_data.vrc_only, 15);
