@@ -59,6 +59,7 @@ impl BoothClient {
         return BoothClient::with_client(
             reqwest::Client::builder()
             .user_agent(SELF_USER_AGENT)
+            .timeout(std::time::Duration::from_secs(60))
             .build()
             .unwrap_or_default()
         );
