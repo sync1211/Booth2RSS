@@ -76,7 +76,7 @@ impl ResponseCache {
         let timediff = match SystemTime::now().duration_since(entry.timestamp) {
             Ok(duration) => duration,
             Err(e) => {
-                println!("Error determining time difference: {}. Assuming outdated!", e);
+                eprintln!("Error determining time difference: {}. Assuming outdated!", e);
                 return true;
             }
         };

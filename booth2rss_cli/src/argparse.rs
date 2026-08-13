@@ -36,7 +36,7 @@ pub fn parse_arguments(args: Args) -> Option<CmdParams> {
                     cmd_params.max_pages = match max_pages_str.parse::<i32>() {
                         Ok(max) => max,
                         Err(e) => {
-                            println!("ERROR: Unable to parse '{max_pages_str}' as i32: {e}");
+                            eprintln!("ERROR: Unable to parse '{max_pages_str}' as i32: {e}");
                             return None;
                         }
                     }

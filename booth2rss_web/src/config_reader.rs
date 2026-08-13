@@ -26,7 +26,7 @@ impl Default for ConfigData {
 
 pub fn read_config(path: &str) -> ConfigData {
     if !fs::exists(path).unwrap_or(false) {
-        println!("No config file found at {}", path);
+        eprintln!("No config file found at {}", path);
         return ConfigData::default();
     }
 

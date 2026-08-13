@@ -113,7 +113,7 @@ impl BoothClient {
         };
 
         if let Err(e) = &exchange_res {
-            println!("ERROR: Unable to get currency exchange rate: {e}");
+            eprintln!("ERROR: Unable to get currency exchange rate: {e}");
         }
 
         let mut i = 1;
@@ -260,9 +260,7 @@ fn get_page_count_from_content(content: &String) -> i32 {
     match page_string.parse::<i32>() {
         Ok(page_count) => return page_count,
         Err(error) => {
-            println!("Integer parse error: {}", error);
-            println!("Tried to parse the following string: '{}'", page_string);
-            
+            eprintln!("Unable to get page count: Could not parse '{}' as i32: {}", page_string, error);
             return -1;
         }
     };
@@ -288,7 +286,7 @@ fn get_items_from_content(content: &String, exchange_rate: f32) -> Vec<BoothItem
         let mut item = match item_result {
             Ok(i) => i,
             Err(e) => {
-                println!("Unable to deserialize item: {}", e);
+                eprintln!("Unable to deserialize item: {}", e);
                 continue;
             }
         };
