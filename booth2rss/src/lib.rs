@@ -180,7 +180,7 @@ pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) ->
 
     let response = match result {
         Ok(resp) => resp,
-        Err(e) => return Err(BoothRequestError::HttpError(500, format!("Request failed: {e}")))
+        Err(e) => return Err(BoothRequestError::NetworkError(format!("Request failed: {e}")))
     };
 
     let status = response.status();
