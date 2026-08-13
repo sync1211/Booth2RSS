@@ -101,7 +101,7 @@ impl BoothClient {
             url_obj.set_path(&format!("{url_path}items"));
         }
 
-        let mut page_count = -1;
+        let mut page_count: Option<i32> = None;
         let mut items: Vec<BoothItem> = Vec::new();
 
         // Get exchange rate for currency conversion
@@ -119,8 +119,8 @@ impl BoothClient {
 
         let mut i = 1;
         loop {
-            println!("Fetching page {i}/{page_count}...");
-            url_obj.set_query(Some(&format!("page={i}")));
+            println!("Fetching page {}/{:#?}...", i, page_count);
+            url_obj.set_query(Some(&format!("page={}", i)));
 
             let result = get_page(&self.client, &url_obj, unblur_nsfw).await;
 
@@ -130,11 +130,11 @@ impl BoothClient {
             };
 
             // Detect number of total pages
-            if page_count == -1 {
+            if page_count.is_none() {
                 page_count = get_page_count_from_content(&content);
                 
-                if page_count != -1 {
-                    println!("Detected maximum page count {}", page_count);
+                if let Some(pc) = page_count {
+                    println!("Detected maximum page count {}", pc);
                 }
             }
         
@@ -153,7 +153,7 @@ impl BoothClient {
             println!("New items: {}", new_items_count);
 
             // Exit condition
-            if new_items_count == 0 || i >= max_pages || i >= page_count {
+            if new_items_count == 0 || i >= max_pages || (!page_count.is_none() &&  i >= page_count.unwrap()) {
                 println!("Last page reached!");
                 url_obj.set_query(None);
                 return Ok(create_store_from_content(&content, url_obj.as_ref(), items));
@@ -234,11 +234,8 @@ fn create_store_from_content(content: &String, store_url: &str, items: Vec<Booth
     );
 }
 
-fn get_page_count_from_content(content: &String) -> i32 {
-    let mut page_string = match utils::get_value_between_snippets(content, LAST_PAGE_START_STRING, "\"") {
-        Some(string) => string,
-        None => return -1
-    };
+fn get_page_count_from_content(content: &String) -> Option<i32> {
+    let mut page_string = utils::get_value_between_snippets(content, LAST_PAGE_START_STRING, "\"")?; 
 
     // Cut off parts before number
     let page_num_index = utils::index_of(&page_string, LAST_PAGE_SKIP, 0);
@@ -259,10 +256,10 @@ fn get_page_count_from_content(content: &String) -> i32 {
 
     // Convert to string (page_string is hopefully a valid integer now)
     match page_string.parse::<i32>() {
-        Ok(page_count) => return page_count,
+        Ok(page_count) => return Some(page_count),
         Err(error) => {
             eprintln!("Unable to get page count: Could not parse '{}' as i32: {}", page_string, error);
-            return -1;
+            return None;
         }
     };
 }
