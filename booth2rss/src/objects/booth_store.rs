@@ -1,5 +1,6 @@
 use std::fmt;
 use crate::objects::booth_item::BoothItem;
+use crate::utils::sanitize_xml;
 
 pub struct BoothStore {
     name: String,
@@ -24,10 +25,10 @@ impl BoothStore {
 
     pub fn as_rss(&self, filter_unavailable: bool, filter_nsfw: bool, vrc_only: bool, ttl: i32) -> String {
 
-        let name = &self.name;
-        let nickname = &self.nickname;
+        let name = sanitize_xml(&self.name);
+        let nickname = sanitize_xml(&self.nickname);
         let url = &self.url;
-        let description = &self.description;
+        let description = sanitize_xml(&self.description);
         let icon_url = &self.icon_url;
         
         // Assemble RSS
