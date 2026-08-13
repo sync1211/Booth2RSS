@@ -60,7 +60,7 @@ impl BoothClient {
             reqwest::Client::builder()
             .user_agent(SELF_USER_AGENT)
             .build()
-            .unwrap_or(reqwest::Client::new())
+            .unwrap_or_default()
         );
     }
 
@@ -179,10 +179,7 @@ pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) ->
 
     let response = match result {
         Ok(resp) => resp,
-        Err(e) => {
-            dbg!(&e);
-            return Err(BoothRequestError::HttpError(500, format!("Request failed: {e}")));
-        },
+        Err(e) => return Err(BoothRequestError::HttpError(500, format!("Request failed: {e}")))
     };
 
     let status = response.status();
@@ -201,10 +198,7 @@ pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) ->
 
     return match response.text().await {
         Ok(response_text) => Ok(response_text),
-        Err(e) => {
-            dbg!(e);
-            return Err(BoothRequestError::ParseError("Error reading response text".to_string()));
-        },
+        Err(e) => Err(BoothRequestError::ParseError(format!("Error reading response text: {:?}", e)))
     }
 }
 
