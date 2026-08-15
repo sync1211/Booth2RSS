@@ -2,7 +2,7 @@ use std::{sync::Arc, time::Duration};
 use tokio::sync::Mutex;
 use once_cell::sync::Lazy;
 
-use actix_web::{App, HttpResponse, HttpServer, get, http::StatusCode, web};
+use actix_web::{App, HttpResponse, HttpServer, get, http::StatusCode, web, http::header::ContentType};
 use serde::Deserialize;
 
 extern crate booth2rss;
@@ -93,7 +93,9 @@ async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2
     let mut cache = CACHE.lock().await;
     cache.add_item(cache_key.to_string(), store_rss.to_owned());
 
-    return HttpResponse::Ok().body(store_rss);
+    return HttpResponse::Ok()
+        .content_type(ContentType::xml())
+        .body(store_rss);
 }
 
 #[actix_web::main]
