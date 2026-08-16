@@ -305,7 +305,7 @@ mod tests {
     #[test]
     fn test_get_page_count_from_content() {
         let input = "<li><a class=\"nav-item last-page\" href=\"/items?page=5\"><i class=\"icon-angle-double-right no-margin s-1x\"></i></a></li>".to_string();
-        let expected = 5;
+        let expected = Some(5);
 
         let result = get_page_count_from_content(&input);
 
