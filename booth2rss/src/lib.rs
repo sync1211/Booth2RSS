@@ -80,7 +80,7 @@ impl BoothClient {
         self.currency_target = target.to_string();
     }
 
-    pub async fn get_booth_store(&self, url: &str, max_pages: i32, unblur_nsfw: bool) -> Result<BoothStore, BoothRequestError> {
+    pub async fn get_booth_store(&self, url: &str, max_pages: u32, unblur_nsfw: bool) -> Result<BoothStore, BoothRequestError> {
     
         // Url checks
         let mut url_obj = match Url::parse(url) {
@@ -101,7 +101,7 @@ impl BoothClient {
             url_obj.set_path(&format!("{url_path}items"));
         }
 
-        let mut page_count: Option<i32> = None;
+        let mut page_count: Option<u32> = None;
         let mut items: Vec<BoothItem> = Vec::new();
 
         // Get exchange rate for currency conversion
@@ -234,7 +234,7 @@ fn create_store_from_content(content: &String, store_url: &str, items: Vec<Booth
     );
 }
 
-fn get_page_count_from_content(content: &String) -> Option<i32> {
+fn get_page_count_from_content(content: &String) -> Option<u32> {
     let mut page_string = utils::get_value_between_snippets(content, LAST_PAGE_START_STRING, "\"")?; 
 
     // Cut off parts before number
@@ -255,7 +255,7 @@ fn get_page_count_from_content(content: &String) -> Option<i32> {
     }
 
     // Convert to string (page_string is hopefully a valid integer now)
-    match page_string.parse::<i32>() {
+    match page_string.parse::<u32>() {
         Ok(page_count) => return Some(page_count),
         Err(error) => {
             eprintln!("Unable to get page count: Could not parse '{}' as i32: {}", page_string, error);

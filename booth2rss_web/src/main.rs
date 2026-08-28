@@ -25,7 +25,7 @@ static CACHE: Lazy<Arc<Mutex<ResponseCache>>> = Lazy::new(|| {
 #[serde(default)]
 struct StoreParams {
     url: Option<String>,
-    max_pages: i32,
+    max_pages: u32,
     filter_unavailable: bool,
     unblur_nsfw: bool,
     allow_nsfw: bool,

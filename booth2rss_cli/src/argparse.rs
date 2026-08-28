@@ -5,7 +5,7 @@ pub struct CmdParams {
     pub unblur_nsfw: bool,
     pub allow_nsfw: bool,
     pub include_unavailable: bool,
-    pub max_pages: i32,
+    pub max_pages: u32,
     pub vrc_only: bool,
     pub convert_currency: bool,
     pub convert_target: String
@@ -33,7 +33,7 @@ pub fn parse_arguments(args: Args) -> Option<CmdParams> {
                 if arg.starts_with("https://") {
                     cmd_params.url = arg.to_string();
                 } else if let Some(max_pages_str) = arg.strip_prefix("--max-pages=") {
-                    let max_pages = match max_pages_str.parse::<i32>() {
+                    let max_pages = match max_pages_str.parse::<u32>() {
                         Ok(max) => max,
                         Err(e) => {
                             eprintln!("ERROR: Unable to parse value for --max-pages '{max_pages_str}' as i32: {e}");
@@ -41,7 +41,7 @@ pub fn parse_arguments(args: Args) -> Option<CmdParams> {
                         }
                     };
 
-                    if max_pages <= 0 {
+                    if max_pages == 0 {
                         eprintln!("ERROR: Value for --max-pages may not be ≤0!");
                         continue;
                     }
