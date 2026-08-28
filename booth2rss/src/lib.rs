@@ -290,7 +290,7 @@ fn get_items_from_content(content: &String, exchange_rate: Option<f32>) -> Vec<B
         };
 
         if let Some(rate) = exchange_rate {
-            item.local_price = convert_item_price(&item.price, rate);
+            item.local_price = convert_item_price(&item.price, rate, &self.currency_target);
         }
 
         item_list.push(item);

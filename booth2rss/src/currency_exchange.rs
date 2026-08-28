@@ -32,14 +32,14 @@ pub async fn get_exchange_rate(client: &reqwest::Client, src: &str, tgt: &str) -
     return Ok(rate);
 }
 
-pub fn convert_item_price(price: &str, exchange_rate: f32) -> Option<String> {
+pub fn convert_item_price(price: &str, exchange_rate: f32, target_currency: &str) -> Option<String> {
     let price_clean = price.to_string()
         .replace(",", "")
         .replace(".", "");
     let price_num = &price_clean[0..price_clean.find(" ").unwrap_or(price_clean.len())];
 
     return match price_num.parse::<f32>() {
-        Ok(i) => Some(format!("{:.2}€", i * exchange_rate)),
+        Ok(i) => Some(format!("{:.2}{target_currency}", i * exchange_rate)),
         Err(e) => {
             println!("Unable to convert {price_num} to i32: {e}");
             return None;
