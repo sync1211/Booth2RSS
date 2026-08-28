@@ -140,7 +140,7 @@ impl BoothClient {
         
         
             // Get items from content
-            let new_items = get_items_from_content(&content, exchange_rate);
+            let new_items = get_items_from_content(&content, exchange_rate, &self.currency_target);
             let new_items_iter = new_items.into_iter();
             
             // Add new items to item list
@@ -264,7 +264,7 @@ fn get_page_count_from_content(content: &String) -> Option<i32> {
     };
 }
 
-fn get_items_from_content(content: &String, exchange_rate: Option<f32>) -> Vec<BoothItem> {
+fn get_items_from_content(content: &String, exchange_rate: Option<f32>, target_currency: &str) -> Vec<BoothItem> {
     let mut item_list: Vec<BoothItem> = Vec::new();
     let mut offset  = 0;
     let mut item_result;
@@ -290,7 +290,7 @@ fn get_items_from_content(content: &String, exchange_rate: Option<f32>) -> Vec<B
         };
 
         if let Some(rate) = exchange_rate {
-            item.local_price = convert_item_price(&item.price, rate, &self.currency_target);
+            item.local_price = convert_item_price(&item.price, rate, target_currency);
         }
 
         item_list.push(item);
