@@ -61,7 +61,7 @@ impl BoothClient {
             .user_agent(SELF_USER_AGENT)
             .timeout(std::time::Duration::from_secs(60))
             .build()
-            .unwrap_or_default()
+            .unwrap()
         );
     }
 
