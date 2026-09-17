@@ -104,6 +104,23 @@ impl BoothItem {
 
         return rss;
     }
+
+    pub fn apply_currency_conversion(&mut self, exchange_rate: f32, target_currency: &str) -> bool {
+        let price_clean = self.price.to_string()
+            .replace(",", "")
+            .replace(".", "");
+
+        let price_num = &price_clean[0..price_clean.find(" ").unwrap_or(price_clean.len())];
+        
+        let parse_res = price_num.parse::<f32>();
+        if let Err(e) = parse_res {
+            println!("Unable to convert {price_num} to i32: {e}");
+            return false;
+        }
+
+        self.local_price = Some(format!("{:.2}{target_currency}", parse_res.unwrap() * exchange_rate));
+        return true;
+    }
 }
 
 impl fmt::Display for BoothItem {

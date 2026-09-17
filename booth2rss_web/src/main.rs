@@ -52,23 +52,7 @@ impl Default for StoreParams {
 }
 
 
-pub fn convert_item_price(price: &str, exchange_rate: f32, target_currency: &str) -> Option<String> {
-    let price_clean = price.to_string()
-        .replace(",", "")
-        .replace(".", "");
-
-    let price_num = &price_clean[0..price_clean.find(" ").unwrap_or(price_clean.len())];
-    
-    return match price_num.parse::<f32>() {
-        Ok(i) => Some(format!("{:.2}{target_currency}", i * exchange_rate)),
-        Err(e) => {
-            println!("Unable to convert {price_num} to i32: {e}");
-            return None;
-        }
-    };
-}
-
-async fn convert_price(client: &web::Data<BoothClient>, store: &mut BoothStore, src: &str, tgt: &str, rate_cache: web::Data<Cache<String,f32>>) {
+async fn convert_prices(client: &web::Data<BoothClient>, store: &mut BoothStore, src: &str, tgt: &str, rate_cache: web::Data<Cache<String,f32>>) {
     let key = format!("{src}>{tgt}");
 
     let exchange_rate: f32;
@@ -90,7 +74,7 @@ async fn convert_price(client: &web::Data<BoothClient>, store: &mut BoothStore, 
     }
 
     for item in store.items.iter_mut() {
-        item.local_price = convert_item_price(&item.price, exchange_rate, tgt);
+        item.apply_currency_conversion(exchange_rate, tgt);
     }
 }
 
@@ -141,7 +125,7 @@ async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2
     //TODO: Auto-detect currency
     //TODO: Check currency value
     if let Some(ref target_currency) = store_data.currency {
-        convert_price(&client, &mut store, "JPY", target_currency, exc_cache).await;
+        convert_prices(&client, &mut store, "JPY", target_currency, exc_cache).await;
     }
 
     let store_rss = store.as_rss(store_data.filter_unavailable, !store_data.allow_nsfw, store_data.vrc_only, 15);

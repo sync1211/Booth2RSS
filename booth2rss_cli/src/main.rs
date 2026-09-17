@@ -1,9 +1,26 @@
 use std::env;
 
 extern crate booth2rss;
+use booth2rss::BoothClient;
 use booth2rss::errors::BoothRequestError;
+use booth2rss::objects::booth_store::BoothStore;
 
 mod argparse;
+
+async fn convert_prices(client: &BoothClient, store: &mut BoothStore, src: &str, tgt: &str) {
+    let exchange_res  = client.get_currency_exchange_rate(src, tgt).await;
+
+    if let Err(e) = &exchange_res {
+        eprintln!("ERROR: Unable to get currency exchange rate: {e}");
+        return;
+    }
+
+    let exchange_rate = exchange_res.unwrap().rate;
+
+    for item in store.items.iter_mut() {
+        item.apply_currency_conversion(exchange_rate, tgt);
+    }
+}
 
 #[tokio::main]
 async fn main() {   
@@ -12,8 +29,7 @@ async fn main() {
         None => return
     };
 
-    let mut client = booth2rss::BoothClient::with_defaults();
-    client.set_currency_conversion_options(params.convert_currency, "JPY", &params.convert_target);
+    let client = booth2rss::BoothClient::with_defaults();
     
     let store_res = client.get_booth_store(
         &params.url,
@@ -21,16 +37,26 @@ async fn main() {
         params.unblur_nsfw
     ).await;
 
-    let result = match store_res {
-        Ok(store) => store.as_rss(
+    if let Ok(mut store) = store_res {
+        if params.convert_currency {
+            convert_prices(&client, &mut store, "JPY", &params.convert_target).await;
+        }
+
+        let rss = store.as_rss(
             !params.include_unavailable,
             !params.allow_nsfw,
             params.vrc_only,
             0
-        ),
-        Err(BoothRequestError::HttpError(status, reason)) => format!("ERROR: {} - {}", status, reason),
-        Err(e) => format!("ERROR: {}", e)
-    };
+        );
 
-    println!("{}", result);
+        println!("{rss}");
+        return;
+    }
+
+    if let Err(e) = store_res {
+        match e {
+            BoothRequestError::HttpError(status, reason) => eprintln!("ERROR: {} - {}", status, reason),
+            e => eprintln!("ERROR: {}", e)
+        };
+    }
 }
