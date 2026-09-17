@@ -9,7 +9,7 @@ pub struct ConfigData {
     pub currency_target: String,
     pub currency_source: String,
     pub cache_minutes: u64,
-    pub cache_size: usize
+    pub cache_size: u64
 }
 
 impl Default for ConfigData {

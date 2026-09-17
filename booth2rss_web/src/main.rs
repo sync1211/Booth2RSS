@@ -1,6 +1,5 @@
-use std::{sync::Arc, time::Duration};
-use tokio::sync::Mutex;
-use once_cell::sync::Lazy;
+use std::time::Duration;
+use moka::future::Cache;
 
 use actix_web::{App, HttpResponse, HttpServer, get, http::StatusCode, web, http::header::ContentType};
 use serde::Deserialize;
@@ -8,8 +7,8 @@ use serde::Deserialize;
 extern crate booth2rss;
 use booth2rss::{BoothClient, errors::BoothRequestError};
 
-mod cache;
-use cache::ResponseCache;
+//mod cache;
+//use cache::ResponseCache;
 
 use crate::config_reader::read_config;
 
@@ -17,9 +16,6 @@ mod config_reader;
 
 const CONFIG_PATH: &str = "./config.json";
 
-static CACHE: Lazy<Arc<Mutex<ResponseCache>>> = Lazy::new(|| {
-    Arc::new(Mutex::new(ResponseCache::with_defaults()))
-});
 
 #[derive(Deserialize)]
 #[serde(default)]
@@ -46,7 +42,7 @@ impl Default for StoreParams {
 }
 
 #[get("/booth2rss/store")]
-async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2rss::BoothClient>) -> HttpResponse {
+async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2rss::BoothClient>, cache: web::Data<Cache<String, String>>) -> HttpResponse {
     let url = match &store_data.url {
         Some(url) => url.to_owned(),
         None => return HttpResponse::UnprocessableEntity().body("No url provided".to_string())
@@ -67,11 +63,8 @@ async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2
     );
 
     // Get value from cache if it's still valid
-    {
-        let cache = CACHE.lock().await;
-        if let Some(rss) = cache.get_active_value(&cache_key) {
-            return HttpResponse::Ok().body(rss.to_owned());
-        }
+    if let Some(rss) = cache.get(&cache_key).await {
+        return HttpResponse::Ok().body(rss.to_owned());
     }
     let store_res = client.get_booth_store(&url, store_data.max_pages, store_data.unblur_nsfw).await;
 
@@ -90,8 +83,7 @@ async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2
     let store_rss = store.as_rss(store_data.filter_unavailable, !store_data.allow_nsfw, store_data.vrc_only, 15);
 
     // Save value to cache
-    let mut cache = CACHE.lock().await;
-    cache.add_item(cache_key.to_string(), store_rss.to_owned());
+    cache.insert(cache_key.to_string(), store_rss.to_owned()).await;
 
     return HttpResponse::Ok()
         .content_type(ContentType::xml())
@@ -110,15 +102,21 @@ async fn main() -> std::io::Result<()> {
         &config_data.currency_target,
     );
 
-    {
-        let mut cache = CACHE.lock().await;
-        cache.set_max_size(config_data.cache_size);
-        cache.set_max_age(Duration::from_mins(config_data.cache_minutes));
-    }
+//    let cache = ResponseCache::new(
+//        config_data.cache_size,
+//        Duration::from_mins(config_data.cache_minutes)
+//    );
+
+    //TODO: Cache BoothStore, not just the RSS string!
+    let cache = Cache::<String, String>::builder()
+        .max_capacity(config_data.cache_size)
+        .time_to_live(Duration::from_mins(config_data.cache_minutes))
+        .build();
 
     HttpServer::new(move || {
         App::new()
         .app_data(web::Data::new(client.clone()))
+        .app_data(web::Data::new(cache.clone()))
         .service(get_store)
     })
         .bind(("0.0.0.0", 8080))?
