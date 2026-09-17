@@ -1,5 +1,6 @@
 use std::fmt;
 use crate::objects::multi_language_name::MultiLanguageName;
+use rss::{Category, CategoryBuilder};
 use serde::{Deserialize};
 
 
@@ -13,6 +14,12 @@ pub struct BoothCategory {
 impl BoothCategory {
     pub fn get_name(&self) -> String {
         return self.name.en.to_string();
+    }
+
+    pub fn as_rss(&self) -> Category {
+        return CategoryBuilder::default()
+            .name(self.get_name())
+            .build();
     }
 }
 

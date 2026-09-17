@@ -1,11 +1,11 @@
 use std::fmt;
+use rss::{CategoryBuilder, Channel, ChannelBuilder, ImageBuilder};
+
 use crate::objects::booth_item::BoothItem;
-use crate::utils::sanitize_xml;
 
 #[derive(Clone)]
 pub struct BoothStore {
     name: String,
-    nickname: String,
     description: String,
     url: String,
     icon_url: String,
@@ -13,10 +13,9 @@ pub struct BoothStore {
 }
 
 impl BoothStore {
-    pub fn new(name: String, nickname: String, description: String, url: &str, icon_url: String, items: Vec<BoothItem>) -> BoothStore {
+    pub fn new(name: String, description: String, url: &str, icon_url: String, items: Vec<BoothItem>) -> BoothStore {
         return BoothStore {
             name: name,
-            nickname: nickname,
             description: description,
             url: url.to_owned(),
             icon_url: icon_url,
@@ -24,31 +23,9 @@ impl BoothStore {
         }
     }
 
-    pub fn as_rss(&self, filter_unavailable: bool, filter_nsfw: bool, vrc_only: bool, ttl: i32) -> String {
-
-        let name = sanitize_xml(&self.name);
-        let nickname = sanitize_xml(&self.nickname);
-        let url = &self.url;
-        let description = sanitize_xml(&self.description);
-        let icon_url = &self.icon_url;
-        
-        // Assemble RSS
-        let mut rss = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>".to_string();
-        rss.push_str("<rss version=\"2.0\">");
-        rss.push_str("<channel>");
-        rss.push_str(&format!("<title>{name}</title>"));
-        rss.push_str(&format!("<link>{url}</link>"));
-        rss.push_str(&format!("<description>{description}</description>"));
-        rss.push_str("<generator>Booth2RSS (Rust)</generator>");
-        rss.push_str("<image>");
-        rss.push_str(&format!("<url>{icon_url}</url>"));
-        rss.push_str(&format!("<title>{nickname}</title>"));
-        rss.push_str(&format!("<link>{icon_url}</link>"));
-        rss.push_str("</image>");
-        rss.push_str("<category>Store</category>");
-        rss.push_str(&format!("<ttl>{ttl}</ttl>"));
-
+    pub fn as_rss(&self, filter_unavailable: bool, filter_nsfw: bool, vrc_only: bool, ttl: i32) -> Channel {
         // Add items 
+        let mut items = Vec::new();
         for item in self.items.iter() {
             // Filter: Unavailable
             let is_unavailable = item.is_sold_out || item.is_end_of_sale;
@@ -59,13 +36,28 @@ impl BoothStore {
                 continue;
             }
 
-            rss.push_str(&item.as_rss());
+            items.push(item.as_rss());
         }
 
-        rss.push_str("</channel>");
-        rss.push_str("</rss>");
+        // Assemble RSS
+        let icon = ImageBuilder::default()
+            .link(self.icon_url.to_string())
+            .build();
+        let category = CategoryBuilder::default()
+            .name("store".to_string())
+            .build();
+        let channel = ChannelBuilder::default()
+            .ttl(ttl.to_string())
+            .title(self.name.to_string())
+            .link(self.url.to_string())
+            .image(icon)
+            .items(items)
+            .description(self.description.to_string())
+            .generator("Booth2RSS".to_string())
+            .category(category)
+            .build();
 
-        return rss;
+        return channel;
     }
 }
 

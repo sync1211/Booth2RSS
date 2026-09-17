@@ -147,7 +147,7 @@ async fn get_store(store_data: web::Query<StoreParams>, globals: web::Data<AppGl
     
     return HttpResponse::Ok()
         .content_type(ContentType::xml())
-        .body(store_rss);
+        .body(store_rss.to_string());
 }
 
 #[actix_web::main]

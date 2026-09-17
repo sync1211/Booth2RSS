@@ -204,7 +204,6 @@ fn create_store_from_content(content: &String, store_url: &str, items: Vec<Booth
 
     return BoothStore::new(
         name,
-        nickname,
         description,
         store_url,
         icon_url,

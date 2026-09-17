@@ -1,5 +1,6 @@
 use std::fmt;
-use crate::{objects::booth_category::BoothCategory, utils::sanitize_xml};
+use crate::objects::booth_category::BoothCategory;
+use rss::{EnclosureBuilder, GuidBuilder, Item, ItemBuilder};
 use serde::{Deserialize};
 
 #[derive(Deserialize, Debug, Clone)]
@@ -53,7 +54,7 @@ impl BoothItem {
             description.push_str(" (End Of Sale)");
         }
 
-        return sanitize_xml(&description);
+        return description;
 	}
 
     fn get_state_id(&self) -> String {
@@ -70,7 +71,7 @@ impl BoothItem {
         return state_id;
     }
 
-    pub fn as_rss(&self) -> String {
+    pub fn as_rss(&self) -> Item {
         let mut display_name = String::new();
         
         if self.is_adult {
@@ -78,31 +79,27 @@ impl BoothItem {
         }
         display_name.push_str(&self.name);
 
-        let display_name_safe = sanitize_xml(&display_name);
 
         let thumbnail_url = self.thumbnail_image_urls.first().map_or("", |x| x);
 
-        // ID of the current item state
-        // Any change in price or availability will be treated as a new entry by RSS readers
-        let state_id = self.get_state_id();
+        let id = GuidBuilder::default()
+            // ID of the current item state
+            // Any change in price or availability will be treated as a new entry by RSS readers
+            .value(self.get_state_id())
+            .build();
+        let enclosure = EnclosureBuilder::default()
+            .url(thumbnail_url)
+            .build();
+        let item = ItemBuilder::default()
+            .description(self.get_description())
+            .enclosure(enclosure)
+            .title(display_name)
+            .link(self.url.to_string())
+            .guid(id)
+            .category(self.category.as_rss())
+            .build();
 
-        let category_name = self.category.get_name();
-        let description = self.get_description();
-        let url = &self.url;
-
-        let mut rss = String::new();
-        rss.push_str("<item>");
-        rss.push_str(&format!("<title>{display_name_safe}</title>"));
-        rss.push_str(&format!("<link>{url}</link>"));
-        rss.push_str(&format!("<enclosure url=\"{thumbnail_url}\" type=\"image/jpeg\" length=\"0\"/>"));
-        rss.push_str("<description>");
-        rss.push_str(&description);
-        rss.push_str("</description>");
-        rss.push_str(&format!("<guid>{state_id}</guid>"));
-        rss.push_str(&format!("<category>{category_name}</category>"));
-        rss.push_str("</item>");
-
-        return rss;
+        return item;
     }
 
     pub fn try_detect_currency(&self) -> Option<String> {
