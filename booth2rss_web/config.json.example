@@ -1,6 +1,4 @@
 {
-    "convert_currency": true,
-    "currency_target": "EUR",
     "currency_source": "JPY",
     "cache_minutes": 15,
     "cache_size": 50

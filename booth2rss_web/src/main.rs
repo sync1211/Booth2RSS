@@ -22,8 +22,7 @@ const CONFIG_PATH: &str = "./config.json";
 //    exc_rate_cache: Cache<String,f32>,
 //    booth_client: BoothClient,
 //    currency_src: String,
-//    currency_tgt: String,
-//    convert_currency: bool
+//    allow_currency_conversion: bool
 //}
 
 #[derive(Deserialize)]
@@ -34,7 +33,8 @@ struct StoreParams {
     filter_unavailable: bool,
     unblur_nsfw: bool,
     allow_nsfw: bool,
-    vrc_only: bool
+    vrc_only: bool,
+    currency: Option<String>
 }
 
 impl Default for StoreParams {
@@ -45,7 +45,8 @@ impl Default for StoreParams {
             filter_unavailable: true,
             unblur_nsfw: false,
             allow_nsfw: false,
-            vrc_only: false
+            vrc_only: false,
+            currency: None
         }
     }
 }
@@ -67,7 +68,7 @@ pub fn convert_item_price(price: &str, exchange_rate: f32, target_currency: &str
     };
 }
 
-async fn convert_price(client: &web::Data<BoothClient>, store: &mut BoothStore, src: String, tgt: String, rate_cache: web::Data<Cache<String,f32>>) {
+async fn convert_price(client: &web::Data<BoothClient>, store: &mut BoothStore, src: &str, tgt: &str, rate_cache: web::Data<Cache<String,f32>>) {
     let key = format!("{src}>{tgt}");
 
     let exchange_rate: f32;
@@ -75,7 +76,7 @@ async fn convert_price(client: &web::Data<BoothClient>, store: &mut BoothStore, 
         exchange_rate = cached_rate;
     } else {
 
-        let exchange_res  = client.get_currency_exchange_rate(&src, &tgt).await;
+        let exchange_res  = client.get_currency_exchange_rate(src, tgt).await;
 
         if let Err(e) = &exchange_res {
             eprintln!("ERROR: Unable to get currency exchange rate: {e}");
@@ -89,7 +90,7 @@ async fn convert_price(client: &web::Data<BoothClient>, store: &mut BoothStore, 
     }
 
     for item in store.items.iter_mut() {
-        item.local_price = convert_item_price(&item.price, exchange_rate, &tgt);
+        item.local_price = convert_item_price(&item.price, exchange_rate, tgt);
     }
 }
 
@@ -137,7 +138,11 @@ async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2
 
     // Apply currency conversion
     //TODO: Pass config values
-    convert_price(&client, &mut store, "JPY".to_string(), "EUR".to_string(), exc_cache).await;
+    //TODO: Auto-detect currency
+    //TODO: Check currency value
+    if let Some(ref target_currency) = store_data.currency {
+        convert_price(&client, &mut store, "JPY", target_currency, exc_cache).await;
+    }
 
     let store_rss = store.as_rss(store_data.filter_unavailable, !store_data.allow_nsfw, store_data.vrc_only, 15);
     
@@ -168,10 +173,8 @@ async fn main() -> std::io::Result<()> {
 //        exc_rate_cache: exc_cache,
 //        booth_client: client,
 //        currency_src: config_data.currency_source,
-//        currency_tgt: config_data.currency_target,
-//        convert_currency: config_data.convert_currency
+//        allow_currency_conversion: true //TODO: Add to config
 //    };
-//TODO: Add target currency as a web parameter
 
     HttpServer::new(move || {
         App::new()

@@ -5,8 +5,6 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 pub struct ConfigData {
-    pub convert_currency: bool,
-    pub currency_target: String,
     pub currency_source: String,
     pub cache_minutes: u64,
     pub cache_size: u64
@@ -15,8 +13,6 @@ pub struct ConfigData {
 impl Default for ConfigData {
     fn default() -> Self {
         return ConfigData {
-            convert_currency: true,
-            currency_target: "EUR".to_string(),
             currency_source: "JPY".to_string(),
             cache_minutes: 15,
             cache_size: 50
