@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-actix-web = "4.14.0"
+actix-web = "4.15.0"
 booth2rss = { path = "../booth2rss" }
 moka = { version = "0.12.16", features = [ "future" ] }
 serde = "1.0.229"
