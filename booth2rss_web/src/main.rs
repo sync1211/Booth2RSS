@@ -106,12 +106,9 @@ async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2
     }
 
     let cache_key = format!(
-        "{}{}{}{}{}-{}",
+        "{}{}-{}",
         store_data.max_pages,
         store_data.unblur_nsfw,
-        store_data.filter_unavailable,
-        store_data.allow_nsfw,
-        store_data.vrc_only,
         url
     );
 
