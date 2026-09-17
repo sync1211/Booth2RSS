@@ -94,7 +94,7 @@ impl BoothClient {
 
         let mut i = 1;
         loop {
-            println!("Fetching page {}/{:#?}...", i, page_count);
+            println!("Fetching page {}/{:#?}...", i, page_count.unwrap_or_default());
             url_obj.set_query(Some(&format!("page={}", i)));
 
             let result = get_page(&self.client, &url_obj, unblur_nsfw).await;
