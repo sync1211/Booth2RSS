@@ -89,6 +89,7 @@ async fn convert_prices(client: &BoothClient, store: &mut BoothStore, fallback_c
 
 #[get("/booth2rss/store")]
 async fn get_store(store_data: web::Query<StoreParams>, globals: web::Data<AppGlobals>) -> HttpResponse {
+    // Check URL
     let url = match &store_data.url {
         Some(url) => url.to_owned(),
         None => return HttpResponse::UnprocessableEntity().body("No url provided".to_string())
@@ -96,6 +97,15 @@ async fn get_store(store_data: web::Query<StoreParams>, globals: web::Data<AppGl
 
     if url.is_empty() {
         return HttpResponse::UnprocessableEntity().body("No url provided".to_string())
+    }
+
+    // Check currency value
+    let mut target_currency = None;
+    if let Some(ref currency) = store_data.currency {
+        if currency.trim().len() != 3 || !currency.is_ascii() || currency.contains(" ") {
+            return HttpResponse::UnprocessableEntity().body(format!("Invalid short value for currency: '{currency}'"))
+        }
+        target_currency = Some(currency);
     }
 
     let cache_key = format!(
@@ -129,8 +139,7 @@ async fn get_store(store_data: web::Query<StoreParams>, globals: web::Data<AppGl
     }
 
     // Apply currency conversion
-    //TODO: Check currency value
-    if globals.allow_currency_conversion && let Some(ref target_currency) = store_data.currency {
+    if globals.allow_currency_conversion && let Some(target_currency) = target_currency {
         convert_prices(&globals.booth_client, &mut store, &globals.fallback_currency_src, target_currency, &globals.exc_rate_cache).await;
     }
 

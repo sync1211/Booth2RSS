@@ -106,10 +106,14 @@ impl BoothItem {
     }
 
     pub fn try_detect_currency(&self) -> Option<String> {
-        let price = self.price.trim();
+        let price_clean = self.price
+            .to_string()
+            .replace("~", "");
+        let price_trim = &price_clean
+            .trim();
 
         // Extract the last 3 letters of the price (should be three letters)
-        let currency = &price[price.len() - 3..];
+        let currency = &price_trim[price_trim.len() - 3..];
 
         if !currency.contains(" ") && !currency.is_empty() && currency.is_ascii() {
             let uppercase = currency.to_ascii_uppercase();
