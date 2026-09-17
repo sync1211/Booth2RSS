@@ -95,7 +95,7 @@ async fn convert_price(client: &web::Data<BoothClient>, store: &mut BoothStore, 
 
 
 #[get("/booth2rss/store")]
-async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2rss::BoothClient>, cache: web::Data<Cache<String, String>>, exc_cache: web::Data<Cache<String,f32>>) -> HttpResponse {
+async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2rss::BoothClient>, cache: web::Data<Cache<String, BoothStore>>, exc_cache: web::Data<Cache<String,f32>>) -> HttpResponse {
     let url = match &store_data.url {
         Some(url) => url.to_owned(),
         None => return HttpResponse::UnprocessableEntity().body("No url provided".to_string())
@@ -116,32 +116,34 @@ async fn get_store(store_data: web::Query<StoreParams>, client: web::Data<booth2
     );
 
     // Get value from cache if it's still valid
-    if let Some(rss) = cache.get(&cache_key).await {
-        return HttpResponse::Ok().body(rss.to_owned());
+    let mut store: BoothStore;
+    if let Some(cached_store) = cache.get(&cache_key).await {
+        store = cached_store;
+    } else {
+        let store_res = client.get_booth_store(&url, store_data.max_pages, store_data.unblur_nsfw).await;
+
+        store = match store_res {
+            Ok(s) => s,
+            Err(BoothRequestError::HttpError(status_code, reason)) => {
+                let status = StatusCode::from_u16(status_code)
+                    .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
+
+                return HttpResponse::build(status)
+                    .body(reason);
+            },
+            Err(e) => return HttpResponse::InternalServerError().body(e.to_string())
+        };
+
+        // Save value to cache
+        cache.insert(cache_key, store.clone()).await;
     }
-    let store_res = client.get_booth_store(&url, store_data.max_pages, store_data.unblur_nsfw).await;
-
-    let mut store = match store_res {
-        Ok(s) => s,
-        Err(BoothRequestError::HttpError(status_code, reason)) => {
-            let status = StatusCode::from_u16(status_code)
-                .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
-
-            return HttpResponse::build(status)
-                .body(reason);
-        },
-        Err(e) => return HttpResponse::InternalServerError().body(e.to_string())
-    };
 
     // Apply currency conversion
     //TODO: Pass config values
     convert_price(&client, &mut store, "JPY".to_string(), "EUR".to_string(), exc_cache).await;
 
     let store_rss = store.as_rss(store_data.filter_unavailable, !store_data.allow_nsfw, store_data.vrc_only, 15);
-
-    // Save value to cache
-    cache.insert(cache_key.to_string(), store_rss.to_owned()).await;
-
+    
     return HttpResponse::Ok()
         .content_type(ContentType::xml())
         .body(store_rss);
@@ -154,8 +156,7 @@ async fn main() -> std::io::Result<()> {
 
     let client = BoothClient::with_defaults();
 
-    //TODO: Cache BoothStore, not just the RSS string!
-    let req_cache = Cache::<String, String>::builder()
+    let req_cache = Cache::<String, BoothStore>::builder()
         .max_capacity(config_data.cache_size)
         .time_to_live(Duration::from_mins(config_data.cache_minutes))
         .build();
@@ -173,6 +174,7 @@ async fn main() -> std::io::Result<()> {
 //        currency_tgt: config_data.currency_target,
 //        convert_currency: config_data.convert_currency
 //    };
+//TODO: Add target currency as a web parameter
 
     HttpServer::new(move || {
         App::new()

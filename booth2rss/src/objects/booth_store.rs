@@ -2,6 +2,7 @@ use std::fmt;
 use crate::objects::booth_item::BoothItem;
 use crate::utils::sanitize_xml;
 
+#[derive(Clone)]
 pub struct BoothStore {
     name: String,
     nickname: String,
