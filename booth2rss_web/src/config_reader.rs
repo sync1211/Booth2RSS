@@ -7,7 +7,10 @@ use serde::Deserialize;
 pub struct ConfigData {
     pub currency_source: String,
     pub cache_minutes: u64,
-    pub cache_size: u64
+    pub cache_size: u64,
+    pub allow_currency_conversion: bool,
+    pub currency_conversion_cache_size: u64,
+    pub currency_conversion_cache_ttl_minutes: u64
 }
 
 impl Default for ConfigData {
@@ -15,7 +18,10 @@ impl Default for ConfigData {
         return ConfigData {
             currency_source: "JPY".to_string(),
             cache_minutes: 15,
-            cache_size: 50
+            cache_size: 50,
+            allow_currency_conversion: true,
+            currency_conversion_cache_size: 10,
+            currency_conversion_cache_ttl_minutes: 120
         }
     }
 }

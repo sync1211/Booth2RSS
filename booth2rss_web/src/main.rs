@@ -148,8 +148,8 @@ async fn main() -> std::io::Result<()> {
         .build();
 
     let exc_cache = Cache::<String, String>::builder()
-        .max_capacity(config_data.cache_size)
-        .time_to_live(Duration::from_mins(60)) //TODO: make This configurable!
+        .max_capacity(config_data.currency_conversion_cache_size)
+        .time_to_live(Duration::from_mins(config_data.currency_conversion_cache_ttl_minutes))
         .build();
 
 //    let globals = AppGlobals {
@@ -157,7 +157,7 @@ async fn main() -> std::io::Result<()> {
 //        exc_rate_cache: exc_cache,
 //        booth_client: client,
 //        currency_src: config_data.currency_source,
-//        allow_currency_conversion: true //TODO: Add to config
+//        allow_currency_conversion: config_data.allow_currency_conversion,
 //    };
 
     HttpServer::new(move || {
