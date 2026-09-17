@@ -50,7 +50,7 @@ impl Default for StoreParams {
 
 
 async fn convert_prices(client: &BoothClient, store: &mut BoothStore, fallback_currency: &str, target_currency: &str, rate_cache: &Cache<String,f32>) {
-    if store.items.len() == 0 {
+    if store.items.is_empty() {
         return;
     }
 
