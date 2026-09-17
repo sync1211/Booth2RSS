@@ -2,10 +2,10 @@ mod utils;
 use url::Url;
 use substring::Substring;
 
-mod currency_exchange;
+pub mod currency_exchange;
 use currency_exchange::get_exchange_rate;
+use currency_exchange::CurrencyExchangeRate;
 
-use crate::currency_exchange::convert_item_price;
 use crate::objects::booth_item::BoothItem;
 use crate::objects::booth_store::BoothStore;
 
@@ -47,10 +47,7 @@ const ITEM_DATA_END: &str = "\"";
 
 #[derive(Clone)]
 pub struct BoothClient {
-    client: reqwest::Client,
-    convert_currency: bool,
-    currency_target: String,
-    currency_source: String
+    client: reqwest::Client
 }
 
 
@@ -67,17 +64,8 @@ impl BoothClient {
 
     pub fn with_client(client: reqwest::Client) -> BoothClient {
         return BoothClient{
-            client,
-            convert_currency: true,
-            currency_target: "EUR".to_string(),
-            currency_source: "JPY".to_string(),
+            client
         };
-    }
-
-    pub fn set_currency_conversion_options(&mut self, enabled: bool, source: &str, target: &str) {
-        self.convert_currency = enabled;
-        self.currency_source = source.to_string();
-        self.currency_target = target.to_string();
     }
 
     pub async fn get_booth_store(&self, url: &str, max_pages: u32, unblur_nsfw: bool) -> Result<BoothStore, BoothRequestError> {
@@ -104,19 +92,6 @@ impl BoothClient {
         let mut page_count: Option<u32> = None;
         let mut items: Vec<BoothItem> = Vec::new();
 
-        // Get exchange rate for currency conversion
-        //TODO: Make target currency configurable!
-        let exchange_res  = get_exchange_rate(&self.client, &self.currency_source, &self.currency_target).await;
-        
-        let exchange_rate = match &exchange_res {
-            Ok(exc) => Some(exc.rate),
-            Err(_) => None
-        };
-
-        if let Err(e) = &exchange_res {
-            eprintln!("ERROR: Unable to get currency exchange rate: {e}");
-        }
-
         let mut i = 1;
         loop {
             println!("Fetching page {}/{:#?}...", i, page_count);
@@ -140,7 +115,7 @@ impl BoothClient {
         
         
             // Get items from content
-            let new_items = get_items_from_content(&content, exchange_rate, &self.currency_target);
+            let new_items = get_items_from_content(&content);
             let new_items_iter = new_items.into_iter();
             
             // Add new items to item list
@@ -161,6 +136,10 @@ impl BoothClient {
 
             i += 1;
         }
+    }
+
+    pub async fn get_currency_exchange_rate(&self, src: &str, tgt: &str) -> Result<CurrencyExchangeRate, String> {
+        return get_exchange_rate(&self.client, src, tgt).await; 
     }
 }
 
@@ -264,7 +243,7 @@ fn get_page_count_from_content(content: &String) -> Option<u32> {
     };
 }
 
-fn get_items_from_content(content: &String, exchange_rate: Option<f32>, target_currency: &str) -> Vec<BoothItem> {
+fn get_items_from_content(content: &String) -> Vec<BoothItem> {
     let mut item_list: Vec<BoothItem> = Vec::new();
     let mut offset  = 0;
     let mut item_result;
@@ -281,17 +260,13 @@ fn get_items_from_content(content: &String, exchange_rate: Option<f32>, target_c
         // Deserialize
         let item_result = serde_json::from_str::<BoothItem>(item_data_string.trim());
 
-        let mut item = match item_result {
+        let item = match item_result {
             Ok(i) => i,
             Err(e) => {
                 eprintln!("Unable to deserialize item: {}", e);
                 continue;
             }
         };
-
-        if let Some(rate) = exchange_rate {
-            item.local_price = convert_item_price(&item.price, rate, target_currency);
-        }
 
         item_list.push(item);
     }
