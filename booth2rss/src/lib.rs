@@ -109,10 +109,9 @@ impl BoothClient {
                 page_count = get_page_count_from_content(&content);
                 
                 if let Some(pc) = page_count {
-                    println!("Detected maximum page count {}", pc);
+                    println!("Detected maximum page count: {}", pc);
                 }
             }
-        
         
             // Get items from content
             let new_items = get_items_from_content(&content);

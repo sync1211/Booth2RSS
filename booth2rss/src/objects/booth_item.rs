@@ -105,7 +105,23 @@ impl BoothItem {
         return rss;
     }
 
-    pub fn apply_currency_conversion(&mut self, exchange_rate: f32, target_currency: &str) -> bool {
+    pub fn try_detect_currency(&self) -> Option<String> {
+        let price = self.price.trim();
+
+        // Extract the last 3 letters of the price (should be three letters)
+        let currency = &price[price.len() - 3..];
+
+        if !currency.contains(" ") && !currency.is_empty() && currency.is_ascii() {
+            let uppercase = currency.to_ascii_uppercase();
+            println!("Detected currency as {uppercase}");
+            return Some(uppercase.to_string());
+        }
+
+        eprintln!("Failed to detect currency from string '{}'", currency);
+        return None;
+    }
+
+    pub fn apply_currency_conversion(&mut self, exchange_rate: f32, currency_suffix: &str) -> bool {
         let price_clean = self.price.to_string()
             .replace(",", "")
             .replace(".", "");
@@ -114,11 +130,11 @@ impl BoothItem {
         
         let parse_res = price_num.parse::<f32>();
         if let Err(e) = parse_res {
-            println!("Unable to convert {price_num} to i32: {e}");
+            eprintln!("Unable to convert '{price_num}' to i32: {e}");
             return false;
         }
 
-        self.local_price = Some(format!("{:.2}{target_currency}", parse_res.unwrap() * exchange_rate));
+        self.local_price = Some(format!("{:.2}{currency_suffix}", parse_res.unwrap() * exchange_rate));
         return true;
     }
 }

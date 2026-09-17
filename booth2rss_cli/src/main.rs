@@ -8,7 +8,14 @@ use booth2rss::objects::booth_store::BoothStore;
 mod argparse;
 
 async fn convert_prices(client: &BoothClient, store: &mut BoothStore, src: &str, tgt: &str) {
-    let exchange_res  = client.get_currency_exchange_rate(src, tgt).await;
+    // Try to auto-detect the currency string
+    let source_currency = store.items
+        .first()
+        .unwrap()
+        .try_detect_currency()
+        .unwrap_or(src.to_owned());
+
+    let exchange_res  = client.get_currency_exchange_rate(&source_currency, tgt).await;
 
     if let Err(e) = &exchange_res {
         eprintln!("ERROR: Unable to get currency exchange rate: {e}");

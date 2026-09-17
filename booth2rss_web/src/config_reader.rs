@@ -5,7 +5,7 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 pub struct ConfigData {
-    pub currency_source: String,
+    pub currency_fallback: String,
     pub cache_minutes: u64,
     pub cache_size: u64,
     pub allow_currency_conversion: bool,
@@ -16,7 +16,7 @@ pub struct ConfigData {
 impl Default for ConfigData {
     fn default() -> Self {
         return ConfigData {
-            currency_source: "JPY".to_string(),
+            currency_fallback: "JPY".to_string(),
             cache_minutes: 15,
             cache_size: 50,
             allow_currency_conversion: true,

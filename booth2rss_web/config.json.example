@@ -1,5 +1,5 @@
 {
-    "currency_source": "JPY",
+    "currency_fallback": "JPY",
     "cache_minutes": 15,
     "cache_size": 50,
     "allow_currency_conversion": true,
