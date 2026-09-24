@@ -53,6 +53,12 @@ pub fn get_value_between_snippets_offset(content: &String, start: &str, end: &st
     return (Some(slice.to_string()), end_index);
 }
 
+pub fn is_alphabetical(input: &str) -> bool {
+    return input
+        .chars()
+        .all(|c| c.is_alphabetic())
+}
+
 
 #[cfg(test)]
 mod tests {

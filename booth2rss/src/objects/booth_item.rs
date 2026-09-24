@@ -2,6 +2,7 @@ use std::fmt;
 use crate::objects::booth_category::BoothCategory;
 use rss::{EnclosureBuilder, GuidBuilder, Item, ItemBuilder};
 use serde::{Deserialize};
+use crate::utils::is_alphabetical;
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct BoothItem {
@@ -110,9 +111,14 @@ impl BoothItem {
             .trim();
 
         // Extract the last 3 letters of the price (should be three letters)
-        let currency = &price_trim[price_trim.len() - 3..];
+        let currency_opt = price_trim.rsplit(" ").next();
+        if currency_opt.is_none() {
+            eprintln!("Failed to detect currency from string '{}': No space character found!", price_trim);
+            return None;
+        }
+        let currency = currency_opt.unwrap();
 
-        if !currency.contains(" ") && !currency.is_empty() && currency.is_ascii() {
+        if !currency.is_empty() && currency.is_ascii() && is_alphabetical(currency) {
             let uppercase = currency.to_ascii_uppercase();
             println!("Detected currency as {uppercase}");
             return Some(uppercase.to_string());
