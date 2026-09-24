@@ -6,15 +6,11 @@ COPY ./booth2rss_web /build/booth2rss_web
 #WORKDIR "/build/booth2rss_web"
 #RUN cargo build
 
-FROM base AS test-lib
-WORKDIR "/build/booth2rss"
-RUN cargo test
+FROM base AS test
+WORKDIR "/build"
+RUN cargo test --workspace
 
-FROM test-lib AS test-web
-WORKDIR "/build/booth2rss_web"
-RUN cargo test
-
-FROM test-web AS build-release
+FROM test AS build-release
 WORKDIR "/build/booth2rss_web"
 RUN cargo build --release
 RUN mkdir -p "/app"
