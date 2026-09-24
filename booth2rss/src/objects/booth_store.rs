@@ -41,7 +41,9 @@ impl BoothStore {
 
         // Assemble RSS
         let icon = ImageBuilder::default()
-            .link(self.icon_url.to_string())
+            .url(self.icon_url.to_string())
+            .link(self.url.to_string())
+            .title(self.name.to_string())
             .build();
         let category = CategoryBuilder::default()
             .name("store".to_string())
