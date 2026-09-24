@@ -1,3 +1,0 @@
-[workspace]
-members = ["booth2rss", "booth2rss_cli", "booth2rss_web"]
-resolver = "3"

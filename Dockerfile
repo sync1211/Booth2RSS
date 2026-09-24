@@ -8,8 +8,8 @@ ENV RUST_LOG="Info"
 #RUN cargo build
 
 FROM base AS test
-WORKDIR "/build"
-RUN cargo test --workspace
+WORKDIR "/build/booth2rss"
+RUN cargo test
 
 FROM test AS build-release
 WORKDIR "/build/booth2rss_web"
