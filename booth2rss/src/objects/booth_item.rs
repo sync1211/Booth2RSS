@@ -3,6 +3,7 @@ use crate::objects::booth_category::BoothCategory;
 use rss::{EnclosureBuilder, GuidBuilder, Item, ItemBuilder};
 use serde::{Deserialize};
 use crate::utils::is_alphabetical;
+use std::hash::{Hash,Hasher};
 
 #[derive(Deserialize, Debug, Clone)]
 pub struct BoothItem {
@@ -151,3 +152,15 @@ impl fmt::Display for BoothItem {
         write!(f, "[{}]({})", self.name, self.url)
     }
 }
+
+impl Hash for BoothItem {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+    }
+}
+impl PartialEq for BoothItem {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+    }
+}
+impl Eq for BoothItem { }

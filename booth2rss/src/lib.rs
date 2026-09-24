@@ -1,6 +1,7 @@
 mod utils;
 use url::Url;
 use substring::Substring;
+use std::collections::HashSet;
 
 pub mod currency_exchange;
 use currency_exchange::get_exchange_rate;
@@ -90,7 +91,7 @@ impl BoothClient {
         }
 
         let mut page_count: Option<u32> = None;
-        let mut items: Vec<BoothItem> = Vec::new();
+        let mut items: HashSet<BoothItem> = HashSet::new();
 
         let mut i = 1;
         loop {
@@ -121,7 +122,9 @@ impl BoothClient {
             let mut new_items_count = 0;
             for new_item in new_items_iter {
                 //println!("Got: {new_item}");
-                items.push(new_item);
+                if !items.insert(new_item) {
+                    break; // Duplicate item -> we are reading the same page twice
+                }
                 new_items_count += 1;
             }
             println!("New items: {}", new_items_count);
@@ -181,7 +184,7 @@ pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) ->
     }
 }
 
-fn create_store_from_content(content: &String, store_url: &str, items: Vec<BoothItem>) -> BoothStore {
+fn create_store_from_content(content: &String, store_url: &str, items: HashSet<BoothItem>) -> BoothStore {
     let nickname = match utils::get_value_between_snippets(content, STORE_NICK_START, STORE_NICK_END) {
         Some(name) => name,
         None => "(parse error)".to_string()
@@ -207,7 +210,7 @@ fn create_store_from_content(content: &String, store_url: &str, items: Vec<Booth
         description,
         store_url,
         icon_url,
-        items
+        Vec::from_iter(items)
     );
 }
 
