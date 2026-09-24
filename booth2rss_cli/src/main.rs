@@ -22,7 +22,7 @@ async fn convert_prices(client: &BoothClient, store: &mut BoothStore, src: &str,
     let exchange_res  = client.get_currency_exchange_rate(&source_currency, tgt).await;
 
     if let Err(e) = &exchange_res {
-        eprintln!("ERROR: Unable to get currency exchange rate: {e}");
+        log::warn!("Unable to get currency exchange rate: {e}");
         return;
     }
 
@@ -34,7 +34,9 @@ async fn convert_prices(client: &BoothClient, store: &mut BoothStore, src: &str,
 }
 
 #[tokio::main]
-async fn main() {   
+async fn main() {
+    simple_logger::init_with_level(log::Level::Warn).unwrap();
+
     let params = match argparse::parse_arguments(env::args()) {
         Some(p) => p,
         None => return
@@ -66,8 +68,8 @@ async fn main() {
 
     if let Err(e) = store_res {
         match e {
-            BoothRequestError::HttpError(status, reason) => eprintln!("ERROR: {} - {}", status, reason),
-            e => eprintln!("ERROR: {}", e)
+            BoothRequestError::HttpError(status, reason) => log::error!("Got error status: {} - {}", status, reason),
+            e => log::error!("{}", e)
         };
     }
 }

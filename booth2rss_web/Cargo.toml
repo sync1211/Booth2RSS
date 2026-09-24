@@ -6,7 +6,9 @@ edition = "2024"
 [dependencies]
 actix-web = "4.15.0"
 booth2rss = { path = "../booth2rss" }
+log = "0.4.34"
 moka = { version = "0.12.16", features = [ "future" ] }
 serde = "1.0.229"
 serde_json = "1.0.151"
+simple_logger = "5.2.0"
 tokio = "1.53.1"

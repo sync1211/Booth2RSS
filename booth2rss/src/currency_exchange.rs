@@ -14,6 +14,7 @@ const BASE_URL: &str = "https://api.frankfurter.dev/v2/rate/";
 pub async fn get_exchange_rate(client: &reqwest::Client, src: &str, tgt: &str) -> Result<CurrencyExchangeRate, String> {
     let url = format!("{BASE_URL}{src}/{tgt}");
 
+    log::debug!("Requesting URL {url}...");
     let response = match client.get(url).send().await {
         Ok(r) => r,
         Err(e) => return Err(e.to_string())

@@ -7,9 +7,8 @@ use serde::Deserialize;
 extern crate booth2rss;
 use booth2rss::{BoothClient, objects::booth_store::BoothStore, errors::BoothRequestError};
 
-use crate::config_reader::read_config;
-
 mod config_reader;
+use crate::config_reader::read_config;
 
 const CONFIG_PATH: &str = "./config.json";
 
@@ -63,15 +62,18 @@ async fn convert_prices(client: &BoothClient, store: &mut BoothStore, fallback_c
 
     let key = format!("{source_currency}>{target_currency}");
 
+    log::debug!("Get exchange rate for {key}");
+
     let exchange_rate: f32;
     if let Some(cached_rate) = rate_cache.get(&key).await {
         exchange_rate = cached_rate;
+        log::debug!("Using cached exchange rate for {key}");
     } else {
 
         let exchange_res  = client.get_currency_exchange_rate(&source_currency, target_currency).await;
 
         if let Err(e) = &exchange_res {
-            eprintln!("ERROR: Unable to get currency exchange rate: {e}");
+            log::error!("ERROR: Unable to get currency exchange rate: {e}");
             return;
         }
 
@@ -115,10 +117,13 @@ async fn get_store(store_data: web::Query<StoreParams>, globals: web::Data<AppGl
         url
     );
 
+    log::debug!("Store URL: {url}");
+
     // Get value from cache if it's still valid
     let mut store: BoothStore;
     if let Some(cached_store) = globals.store_cache.get(&cache_key).await {
         store = cached_store;
+        log::debug!("Using cached store for key {cache_key}");
     } else {
         let store_res = globals.booth_client.get_booth_store(&url, store_data.max_pages, store_data.unblur_nsfw).await;
 
@@ -152,6 +157,7 @@ async fn get_store(store_data: web::Query<StoreParams>, globals: web::Data<AppGl
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    simple_logger::init_with_env().unwrap();
 
     let config_data = read_config(CONFIG_PATH);
 

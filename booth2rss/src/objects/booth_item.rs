@@ -114,18 +114,18 @@ impl BoothItem {
         // Extract the last 3 letters of the price (should be three letters)
         let currency_opt = price_trim.rsplit(" ").next();
         if currency_opt.is_none() {
-            eprintln!("Failed to detect currency from string '{}': No space character found!", price_trim);
+            log::error!("Failed to detect currency from string '{price_trim}': No space character found!");
             return None;
         }
         let currency = currency_opt.unwrap();
 
         if !currency.is_empty() && currency.is_ascii() && is_alphabetical(currency) {
             let uppercase = currency.to_ascii_uppercase();
-            println!("Detected currency as {uppercase}");
+            log::debug!("Detected currency as {uppercase}");
             return Some(uppercase.to_string());
         }
 
-        eprintln!("Failed to detect currency from string '{}'", currency);
+        log::error!("Failed to detect currency from string '{currency}'");
         return None;
     }
 
@@ -138,7 +138,7 @@ impl BoothItem {
         
         let parse_res = price_num.parse::<f32>();
         if let Err(e) = parse_res {
-            eprintln!("Unable to convert '{price_num}' to i32: {e}");
+            log::error!("Failed to convert currency: Unable to convert '{price_num}' to i32: {e}");
             return false;
         }
 

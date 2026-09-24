@@ -36,14 +36,14 @@ pub fn parse_arguments(args: Args) -> Option<CmdParams> {
                     let max_pages = match max_pages_str.parse::<u32>() {
                         Ok(max) => max,
                         Err(e) => {
-                            eprintln!("ERROR: Unable to parse value for --max-pages '{max_pages_str}' as i32: {e}");
+                            log::error!("Unable to parse value for --max-pages '{max_pages_str}' as i32: {e}");
                             return None;
                         }
                     };
 
                     if max_pages == 0 {
-                        eprintln!("ERROR: Value for --max-pages may not be ≤0!");
-                        continue;
+                        log::error!("Value for --max-pages may not be ≤0!");
+                        return None;
                     }
 
                     cmd_params.max_pages = max_pages;
@@ -51,14 +51,14 @@ pub fn parse_arguments(args: Args) -> Option<CmdParams> {
                     cmd_params.convert_currency = true;
                     cmd_params.convert_target = target.to_string();
                 } else {
-                    println!("WARNING: Unknown parameter '{arg}'");
+                    log::warn!("Unknown parameter '{arg}'");
                 }
             }
         }
     }
 
     if cmd_params.url.is_empty() {
-        println!("ERROR: No URL provided!");
+        log::error!("No URL provided!");
         return None;
     }
 

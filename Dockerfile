@@ -1,6 +1,7 @@
 FROM rust:latest AS base
 COPY ./booth2rss /build/booth2rss
 COPY ./booth2rss_web /build/booth2rss_web
+ENV RUST_LOG="Info" 
 
 #FROM base AS build
 #WORKDIR "/build/booth2rss_web"

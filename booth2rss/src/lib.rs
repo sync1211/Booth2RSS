@@ -95,7 +95,7 @@ impl BoothClient {
 
         let mut i = 1;
         loop {
-            println!("Fetching page {}/{:#?}...", i, page_count.unwrap_or_default());
+            log::info!("Fetching page {}/{:#?}...", i, page_count.unwrap_or_default());
             url_obj.set_query(Some(&format!("page={}", i)));
 
             let result = get_page(&self.client, &url_obj, unblur_nsfw).await;
@@ -110,7 +110,7 @@ impl BoothClient {
                 page_count = get_page_count_from_content(&content);
                 
                 if let Some(pc) = page_count {
-                    println!("Detected maximum page count: {}", pc);
+                    log::debug!("Detected maximum page count: {}", pc);
                 }
             }
         
@@ -121,17 +121,16 @@ impl BoothClient {
             // Add new items to item list
             let mut new_items_count = 0;
             for new_item in new_items_iter {
-                //println!("Got: {new_item}");
                 if !items.insert(new_item) {
                     break; // Duplicate item -> we are reading the same page twice
                 }
                 new_items_count += 1;
             }
-            println!("New items: {}", new_items_count);
+            log::info!("New items: {}", new_items_count);
 
             // Exit condition
             if new_items_count == 0 || i >= max_pages || (!page_count.is_none() &&  i >= page_count.unwrap()) {
-                println!("Last page reached!");
+                log::debug!("Last page reached!");
                 url_obj.set_query(None);
                 return Ok(create_store_from_content(&content, url_obj.as_ref(), items));
             }
@@ -157,6 +156,7 @@ pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) ->
     }
 
     // Request data
+    log::debug!("Sending get request to {url}...");
     let result = builder.send().await;
 
     let response = match result {
@@ -165,7 +165,7 @@ pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) ->
     };
 
     let status = response.status();
-    println!("Status: {status}");
+    log::info!("Request finished with status {status}");
 
     if !status.is_success() {
         return Err(BoothRequestError::HttpError(
@@ -238,7 +238,7 @@ fn get_page_count_from_content(content: &String) -> Option<u32> {
     match page_string.parse::<u32>() {
         Ok(page_count) => return Some(page_count),
         Err(error) => {
-            eprintln!("Unable to get page count: Could not parse '{}' as i32: {}", page_string, error);
+            log::warn!("Unable to get page count: Could not parse '{}' as i32: {}", page_string, error);
             return None;
         }
     };
@@ -264,7 +264,7 @@ fn get_items_from_content(content: &String) -> Vec<BoothItem> {
         let item = match item_result {
             Ok(i) => i,
             Err(e) => {
-                eprintln!("Unable to deserialize item: {}", e);
+                log::error!("Unable to deserialize item: {}", e);
                 continue;
             }
         };
