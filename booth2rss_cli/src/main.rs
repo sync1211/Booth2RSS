@@ -2,7 +2,7 @@ use std::env;
 
 extern crate booth2rss;
 use booth2rss::BoothClient;
-use booth2rss::errors::BoothRequestError;
+use booth2rss::errors::RequestError;
 use booth2rss::objects::booth_store::BoothStore;
 
 mod argparse;
@@ -68,7 +68,7 @@ async fn main() {
 
     if let Err(e) = store_res {
         match e {
-            BoothRequestError::HttpError(status, reason) => log::error!("Got error status: {} - {}", status, reason),
+            RequestError::HttpError(status, reason) => log::error!("Got error status: {} - {}", status, reason),
             e => log::error!("{}", e)
         };
     }

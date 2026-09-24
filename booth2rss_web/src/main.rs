@@ -5,7 +5,7 @@ use actix_web::{App, HttpResponse, HttpServer, get, http::StatusCode, web, http:
 use serde::Deserialize;
 
 extern crate booth2rss;
-use booth2rss::{BoothClient, objects::booth_store::BoothStore, errors::BoothRequestError};
+use booth2rss::{BoothClient, objects::booth_store::BoothStore, errors::RequestError};
 use booth2rss::utils::is_valid_currency_short;
 
 mod config_reader;
@@ -74,7 +74,7 @@ async fn convert_prices(client: &BoothClient, store: &mut BoothStore, fallback_c
         let exchange_res  = client.get_currency_exchange_rate(&source_currency, target_currency).await;
 
         if let Err(e) = &exchange_res {
-            log::error!("ERROR: Unable to get currency exchange rate: {e}");
+            log::error!("Unable to get currency exchange rate: {e}");
             return;
         }
 
@@ -130,7 +130,7 @@ async fn get_store(store_data: web::Query<StoreParams>, globals: web::Data<AppGl
 
         store = match store_res {
             Ok(s) => s,
-            Err(BoothRequestError::HttpError(status_code, reason)) => {
+            Err(RequestError::HttpError(status_code, reason)) => {
                 let status = StatusCode::from_u16(status_code)
                     .unwrap_or(StatusCode::INTERNAL_SERVER_ERROR);
 

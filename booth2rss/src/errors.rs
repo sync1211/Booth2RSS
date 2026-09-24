@@ -1,7 +1,7 @@
 use std::fmt;
 
 #[derive(Debug)]
-pub enum BoothRequestError {
+pub enum RequestError {
     InvalidUrl(String),
     NotBoothUrl(),
     HttpError(u16, String),
@@ -9,14 +9,14 @@ pub enum BoothRequestError {
     ParseError(String),
 }
 
-impl fmt::Display for BoothRequestError {
+impl fmt::Display for RequestError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         return match self {
-            BoothRequestError::InvalidUrl(s) => write!(f, "Invalid URL: {}", s),
-            BoothRequestError::NotBoothUrl() => write!(f, "Not a booth.pm URL!"),
-            BoothRequestError::HttpError(status_code, reason) => write!(f, "Request failed: {} - {}", status_code, reason),
-            BoothRequestError::NetworkError(s) => write!(f ,"Network error: {}", s),
-            BoothRequestError::ParseError(s) => write!(f, "Parsing error: {}", s) 
+            RequestError::InvalidUrl(s) => write!(f, "Invalid URL: {}", s),
+            RequestError::NotBoothUrl() => write!(f, "Not a booth.pm URL!"),
+            RequestError::HttpError(status_code, reason) => write!(f, "Request failed: {} - {}", status_code, reason),
+            RequestError::NetworkError(s) => write!(f ,"Network error: {}", s),
+            RequestError::ParseError(s) => write!(f, "Parsing error: {}", s) 
         };
     }
 }

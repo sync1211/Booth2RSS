@@ -11,7 +11,7 @@ use crate::objects::booth_item::BoothItem;
 use crate::objects::booth_store::BoothStore;
 
 pub mod errors;
-use errors::BoothRequestError;
+use errors::RequestError;
 
 pub mod objects {
     pub mod booth_item;
@@ -69,20 +69,20 @@ impl BoothClient {
         };
     }
 
-    pub async fn get_booth_store(&self, url: &str, max_pages: u32, unblur_nsfw: bool) -> Result<BoothStore, BoothRequestError> {
+    pub async fn get_booth_store(&self, url: &str, max_pages: u32, unblur_nsfw: bool) -> Result<BoothStore, RequestError> {
     
         // Url checks
         let mut url_obj = match Url::parse(url) {
             Ok(url) => url,
-            Err(e) => return Err(BoothRequestError::InvalidUrl(e.to_string()))
+            Err(e) => return Err(RequestError::InvalidUrl(e.to_string()))
 
         };
         
         match url_obj.domain() {
             Some(domain) => if !domain.ends_with(".booth.pm") {
-                return Err(BoothRequestError::NotBoothUrl())
+                return Err(RequestError::NotBoothUrl())
             },
-            None => return Err(BoothRequestError::InvalidUrl("Missing domain!".to_string()))
+            None => return Err(RequestError::InvalidUrl("Missing domain!".to_string()))
         };
 
         let url_path = url_obj.path();
@@ -139,7 +139,7 @@ impl BoothClient {
         }
     }
 
-    pub async fn get_currency_exchange_rate(&self, src: &str, tgt: &str) -> Result<CurrencyExchangeRate, String> {
+    pub async fn get_currency_exchange_rate(&self, src: &str, tgt: &str) -> Result<CurrencyExchangeRate, RequestError> {
         return get_exchange_rate(&self.client, src, tgt).await; 
     }
 }
@@ -147,7 +147,7 @@ impl BoothClient {
 
 
 
-pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) -> Result<String, BoothRequestError> {
+pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) -> Result<String, RequestError> {
     let mut builder = client.get(url.to_string())
         .header(reqwest::header::ACCEPT_LANGUAGE, ACCEPTED_LANGUAGE);
 
@@ -161,14 +161,14 @@ pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) ->
 
     let response = match result {
         Ok(resp) => resp,
-        Err(e) => return Err(BoothRequestError::NetworkError(format!("Request failed: {e}")))
+        Err(e) => return Err(RequestError::NetworkError(format!("Request failed: {e}")))
     };
 
     let status = response.status();
     log::info!("Request finished with status {status}");
 
     if !status.is_success() {
-        return Err(BoothRequestError::HttpError(
+        return Err(RequestError::HttpError(
             status.as_u16(),
             status
                 .canonical_reason()
@@ -180,7 +180,7 @@ pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) ->
 
     return match response.text().await {
         Ok(response_text) => Ok(response_text),
-        Err(e) => Err(BoothRequestError::ParseError(format!("Error reading response text: {:?}", e)))
+        Err(e) => Err(RequestError::ParseError(format!("Error reading response text: {:?}", e)))
     }
 }
 
