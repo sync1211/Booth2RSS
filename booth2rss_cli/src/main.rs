@@ -8,6 +8,10 @@ use booth2rss::objects::booth_store::BoothStore;
 mod argparse;
 
 async fn convert_prices(client: &BoothClient, store: &mut BoothStore, src: &str, tgt: &str) {
+    if store.items.is_empty() {
+        return;
+    }
+
     // Try to auto-detect the currency string
     let source_currency = store.items
         .first()
