@@ -23,4 +23,5 @@ RUN cp "target/release/booth2rss_web" "/app/booth2rss_web"
 
 FROM build-release AS run
 EXPOSE 8080
+WORKDIR "/app/booth2rss_web"
 ENTRYPOINT ["/app/booth2rss_web"]
