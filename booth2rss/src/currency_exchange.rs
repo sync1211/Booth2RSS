@@ -29,6 +29,5 @@ pub async fn get_exchange_rate(client: &reqwest::Client, src: &str, tgt: &str) -
         Err(e) => return Err(e.to_string())        
     };
 
-
     return Ok(rate);
 }

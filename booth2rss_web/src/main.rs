@@ -6,6 +6,7 @@ use serde::Deserialize;
 
 extern crate booth2rss;
 use booth2rss::{BoothClient, objects::booth_store::BoothStore, errors::BoothRequestError};
+use booth2rss::utils::is_valid_currency_short;
 
 mod config_reader;
 use crate::config_reader::read_config;
@@ -104,7 +105,7 @@ async fn get_store(store_data: web::Query<StoreParams>, globals: web::Data<AppGl
     // Check currency value
     let mut target_currency = None;
     if let Some(ref currency) = store_data.currency {
-        if currency.trim().len() != 3 || !currency.is_ascii() || currency.contains(" ") {
+        if !is_valid_currency_short(currency) {
             return HttpResponse::UnprocessableEntity().body(format!("Invalid short value for currency: '{currency}'"))
         }
         target_currency = Some(currency);

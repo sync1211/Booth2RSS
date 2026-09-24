@@ -1,4 +1,4 @@
-mod utils;
+pub mod utils;
 use url::Url;
 use substring::Substring;
 use std::collections::HashSet;

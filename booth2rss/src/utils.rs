@@ -59,6 +59,12 @@ pub fn is_alphabetical(input: &str) -> bool {
         .all(|c| c.is_alphabetic())
 }
 
+pub fn is_valid_currency_short(input: &str) -> bool {
+    return !input.is_empty() 
+        && input.is_ascii()
+        && is_alphabetical(input);
+}
+
 
 #[cfg(test)]
 mod tests {

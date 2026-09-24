@@ -1,8 +1,7 @@
 use std::fmt;
-use crate::objects::booth_category::BoothCategory;
+use crate::{objects::booth_category::BoothCategory, utils::is_valid_currency_short};
 use rss::{EnclosureBuilder, GuidBuilder, Item, ItemBuilder};
 use serde::{Deserialize};
-use crate::utils::is_alphabetical;
 use std::hash::{Hash,Hasher};
 
 #[derive(Deserialize, Debug, Clone)]
@@ -119,7 +118,7 @@ impl BoothItem {
         }
         let currency = currency_opt.unwrap();
 
-        if !currency.is_empty() && currency.is_ascii() && is_alphabetical(currency) {
+        if is_valid_currency_short(currency) {
             let uppercase = currency.to_ascii_uppercase();
             log::debug!("Detected currency as {uppercase}");
             return Some(uppercase.to_string());
