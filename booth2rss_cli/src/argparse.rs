@@ -51,7 +51,8 @@ pub fn parse_arguments(args: Args) -> Option<CmdParams> {
                     cmd_params.convert_currency = true;
                     cmd_params.convert_target = target.to_string();
                 } else {
-                    log::warn!("Unknown parameter '{arg}'");
+                    log::error!("Unknown parameter '{arg}'");
+                    return None;
                 }
             }
         }
