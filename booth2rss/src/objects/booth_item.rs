@@ -141,7 +141,7 @@ impl BoothItem {
             return false;
         }
 
-        self.local_price = Some(format!("{:.2}{currency_suffix}", parse_res.unwrap() * exchange_rate));
+        self.local_price = Some(format!("{:.2}{}", parse_res.unwrap() * exchange_rate, currency_suffix.to_ascii_uppercase()));
         return true;
     }
 }
