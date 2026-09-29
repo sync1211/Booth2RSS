@@ -1,6 +1,6 @@
 pub mod utils;
 use url::Url;
-use substring::Substring;
+use scraper::{Html, Selector};
 use std::collections::HashSet;
 
 pub mod currency_exchange;
@@ -24,27 +24,6 @@ pub mod objects {
 const SELF_USER_AGENT: &str = "Booth2Rss";
 const ADULT_COOKIE: &str = "adult=t";
 const ACCEPTED_LANGUAGE: &str = "en-US";
-
-// Last page detection
-const LAST_PAGE_SKIP: &str= "=";
-const LAST_PAGE_START_STRING: &str= "<a class=\"nav-item last-page\" href=\"/items?";
-
-// Store
-const STORE_NAME_START: &str="<span class=\"shop-name-label display_title\">";
-const STORE_NAME_END: &str = "</span>";
-
-const STORE_NICK_START: &str = "<a class=\"nav\" title=\"Home\" href=\"/\">";
-const STORE_NICK_END: &str = "</a>";
-
-const STORE_DESC_START: &str = "<div class=\"description\"><div class=\"booth-description\"><div class=\"autolink u-mb-[0-9]+\"><div>";
-const STORE_DESC_END: &str = "</div>";
-
-const STORE_ICON_START: &str = "<div class=\"avatar-image\" style=\"background-image: url(";
-const STORE_ICON_END: &str = ")";
-
-// Item
-const ITEM_DATA_START: &str = "data-item=\"";
-const ITEM_DATA_END: &str = "\"";
 
 #[derive(Clone)]
 pub struct BoothClient {
@@ -105,17 +84,19 @@ impl BoothClient {
                 Err(status) => return Err(status),
             };
 
+            let document = Html::parse_document(&content);
+
             // Detect number of total pages
             if page_count.is_none() {
-                page_count = get_page_count_from_content(&content);
+                page_count = get_max_page_count(&document);
                 
                 if let Some(pc) = page_count {
-                    log::debug!("Detected maximum page count: {}", pc);
+                    log::info!("Detected maximum page count: {}", pc);
                 }
             }
         
             // Get items from content
-            let new_items = get_items_from_content(&content);
+            let new_items = get_items_from_content(&document);
             let new_items_iter = new_items.into_iter();
             
             // Add new items to item list
@@ -132,7 +113,7 @@ impl BoothClient {
             if new_items_count == 0 || i >= max_pages || (!page_count.is_none() &&  i >= page_count.unwrap()) {
                 log::debug!("Last page reached!");
                 url_obj.set_query(None);
-                return Ok(create_store_from_content(&content, url_obj.as_ref(), items));
+                return Ok(create_store_from_content(&document, url_obj.as_ref(), items));
             }
 
             i += 1;
@@ -184,26 +165,35 @@ pub async fn get_page(client: &reqwest::Client, url: &Url, allow_adult: bool) ->
     }
 }
 
-fn create_store_from_content(content: &String, store_url: &str, items: HashSet<BoothItem>) -> BoothStore {
-    let nickname = match utils::get_value_between_snippets(content, STORE_NICK_START, STORE_NICK_END) {
-        Some(name) => name,
-        None => "(parse error)".to_string()
-    };
+fn get_element_text(document: &Html, selector: &Selector) -> Option<String> {
+    let element_option = document.select(selector).next();
+    
+    return Some(element_option?.text().collect::<Vec<_>>().join("\n"));
+}
 
-    let name = match utils::get_value_between_snippets(content, STORE_NAME_START, STORE_NAME_END) {
-        Some(name) => name,
-        None => nickname.clone()
-    };
+fn get_background_image(document: &Html, selector: &Selector) -> Option<String> {
+    let element_option = document.select(selector).next();
+    let element_style = element_option?.attr("style")?;
+    
+    let background_url = element_style
+        .split("(").last()?
+        .strip_suffix(")")?.to_string();
 
-    let description = match utils::get_value_between_snippets(content, STORE_DESC_START, STORE_DESC_END) {
-        Some(desc) => desc,
-        None => "(not found)".to_string()
-    };
+    return Some(background_url);
+}
 
-    let icon_url = match utils::get_value_between_snippets(content, STORE_ICON_START, STORE_ICON_END) {
-        Some(desc) => desc,
-        None => "https://booth.pm/favicon.ico".to_string()
-    };
+fn create_store_from_content(document: &Html, store_url: &str, items: HashSet<BoothItem>) -> BoothStore {
+    let nickname_selector = Selector::parse("[title='Home']").unwrap(); //TODO: Lazy init for these?
+    let nickname = get_element_text(document, &nickname_selector).unwrap_or("(parse error)".to_string());
+
+    let name_selector = Selector::parse(".shop-name-label").unwrap();
+    let name = get_element_text(document,  &name_selector).unwrap_or(nickname.clone());
+
+    let description_selector = Selector::parse(".booth-description").unwrap();
+    let description = get_element_text(document,  &description_selector).unwrap_or("(not found)".to_string());
+
+    let icon_selector = Selector::parse(".avatar-image").unwrap();
+    let icon_url = get_background_image(document,  &icon_selector).unwrap_or("https://booth.pm/favicon.ico".to_string());
 
     return BoothStore::new(
         name,
@@ -214,52 +204,42 @@ fn create_store_from_content(content: &String, store_url: &str, items: HashSet<B
     );
 }
 
-fn get_page_count_from_content(content: &String) -> Option<u32> {
-    let mut page_string = utils::get_value_between_snippets(content, LAST_PAGE_START_STRING, "\"")?; 
+fn get_max_page_count(document: &Html) -> Option<u32> {
+    let last_page_selector = Selector::parse(".last-page").unwrap();
 
-    // Cut off parts before number
-    let page_num_index = utils::index_of(&page_string, LAST_PAGE_SKIP, 0);
-    if let Some(index) = page_num_index {
-        page_string = page_string.substring(index + 1, page_string.len()).to_string();
+    let last_page_element_result = document.select(&last_page_selector).next();
+    let last_page_element = last_page_element_result?;
+
+    // Get page number from "href" attribute
+    let last_page_href = last_page_element.attr("href").unwrap_or_default();
+    let last_page_str = last_page_href.split("=").last().unwrap_or_default();
+        
+    // Convert to u32
+    let parse_result = last_page_str.parse::<u32>();
+    if let Err(parse_err) = parse_result {
+        log::warn!("Unable to get page count: Could not parse '{}' as i32: {}", last_page_str, parse_err);
+        return None;
     }
 
-    // Cut off parts after number
-    let param_index = utils::index_of(&page_string, "&", 0);
-    if let Some(index) = param_index {
-        page_string = page_string.substring(0, index).to_string();
-    }
-
-    let param_index = utils::index_of(&page_string, "\"", 0);
-    if let Some(index) = param_index {
-        page_string = page_string.substring(0, index).to_string();
-    }
-
-    // Convert to string (page_string is hopefully a valid integer now)
-    match page_string.parse::<u32>() {
-        Ok(page_count) => return Some(page_count),
-        Err(error) => {
-            log::warn!("Unable to get page count: Could not parse '{}' as i32: {}", page_string, error);
-            return None;
-        }
-    };
+    return Some(parse_result.unwrap());
 }
 
-fn get_items_from_content(content: &String) -> Vec<BoothItem> {
+fn get_items_from_content(document: &Html) -> Vec<BoothItem> {
     let mut item_list: Vec<BoothItem> = Vec::new();
-    let mut offset  = 0;
-    let mut item_result;
+    // let mut offset  = 0;
+    // let mut item_result;
 
-    loop {
-        // Find item data string
-        (item_result, offset) = utils::get_value_between_snippets_offset(content, ITEM_DATA_START, ITEM_DATA_END, offset);
+    let item_selector = Selector::parse("[data-item]").unwrap();
+    let item_elements = document.select(&item_selector);
 
-        let item_data_string = match item_result { 
-            Some(data) => data.replace("&quot;", "\""),
-            None => return item_list
-        };
+    for element in item_elements {
+        let item_data_opt = element.attr("data-item");
+        if item_data_opt.is_none() {
+            continue;
+        }
 
         // Deserialize
-        let item_result = serde_json::from_str::<BoothItem>(item_data_string.trim());
+        let item_result = serde_json::from_str::<BoothItem>(item_data_opt.unwrap());
 
         let item = match item_result {
             Ok(i) => i,
@@ -271,6 +251,8 @@ fn get_items_from_content(content: &String) -> Vec<BoothItem> {
 
         item_list.push(item);
     }
+
+    return item_list;
 }
 
 
@@ -280,10 +262,10 @@ mod tests {
 
     #[test]
     fn test_get_page_count_from_content() {
-        let input = "<li><a class=\"nav-item last-page\" href=\"/items?page=5\"><i class=\"icon-angle-double-right no-margin s-1x\"></i></a></li>".to_string();
+        let input = Html::parse_fragment("<li><a class=\"nav-item last-page\" href=\"/items?page=5\"><i class=\"icon-angle-double-right no-margin s-1x\"></i></a></li>");
         let expected = Some(5);
 
-        let result = get_page_count_from_content(&input);
+        let result = get_max_page_count(&input);
 
         assert_eq!(result, expected);
     }
