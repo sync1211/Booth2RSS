@@ -1,7 +1,16 @@
 FROM rust:slim AS base
 COPY ./booth2rss /build/booth2rss
 COPY ./booth2rss_web /build/booth2rss_web
+COPY ./docker-entry.sh /app/docker-entry.sh
+
 ENV RUST_LOG="Info" 
+ENV BIND_TO="0.0.0.0:8080"
+ENV CURRENCY_FALLBACK="JPY"
+ENV STORE_CACHE_MINUTES="15"
+ENV STORE_CACHE_SIZE="50"
+ENV ALLOW_CURRENCY_CONVERSION="true"
+ENV CURRENCY_CACHE_MINUTES="120"
+ENV CURRENCY_CACHE_SIZE="10"
 
 #FROM base AS build
 #WORKDIR "/build/booth2rss_web"
@@ -25,4 +34,4 @@ RUN cp "config.json" "/app/booth2rss_web/config.json" | true
 FROM build-release AS run
 EXPOSE 8080
 WORKDIR "/app/"
-ENTRYPOINT ["/app/booth2rss_web"]
+ENTRYPOINT ["/app/docker-entry.sh"]

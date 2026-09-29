@@ -1,4 +1,5 @@
 {
+    "bind_to": "0.0.0.0:8080",
     "currency_fallback": "JPY",
     "cache_minutes": 15,
     "cache_size": 50,

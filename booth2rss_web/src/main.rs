@@ -187,7 +187,7 @@ async fn main() -> std::io::Result<()> {
         .app_data(web::Data::new(globals.clone()))
         .service(get_store)
     })
-        .bind(("0.0.0.0", 8080))?
+        .bind(config_data.bind_address)?
         .run()
         .await
 }
