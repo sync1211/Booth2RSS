@@ -35,7 +35,13 @@ async fn convert_prices(client: &BoothClient, store: &mut BoothStore, src: &str,
 
 #[tokio::main]
 async fn main() {
-    simple_logger::init_with_level(log::Level::Warn).unwrap();
+    let mut log_level = log::Level::Warn;
+
+    let log_level_env = env::var("RUST_LOG");
+    if let Ok(log_level_str) = log_level_env {
+        log_level = log_level_str.parse().unwrap_or(log_level);
+    }
+    simple_logger::init_with_level(log_level).unwrap();
 
     let params = match argparse::parse_arguments(env::args()) {
         Some(p) => p,
