@@ -23,7 +23,19 @@ Optional arguments:
 * `currency=<short-name>`: Try to convert the item price into the given currency (Accepts three-letter short forms, e.g. "EUR")
 
 
-## Web configuration
+## Configuration (Web only)
 
-A default configuration can be found in`config.json.example`.
+### Standalone
+A default configuration can be found in `config.json.example`.
 To modify the configuration, copy the file to `config.json`.
+
+### Docker
+The docker container uses the following environment variables for configuration:
+* `RUST_LOG`: The log level for the application (default: `Info`)
+* `LISTEN_ADDRESS`: The address the server should listen on (default: `0.0.0.0:8080`)
+* `CURRENCY_FALLBACK`: The fallback source currency for currency conversions (default: `JPY`)
+* `STORE_CACHE_MINUTES`: TTL of cached stores (default: `15`)
+* `STORE_CACHE_SIZE`: How many stores can be cached at the same time (default: `50`)
+* `ALLOW_CURRENCY_CONVERSION`: Enables currency conversion via the `currency` URL parameter (default: `true`)
+* `CURRENCY_CACHE_MINUTES`: TTL of cached currency conversion rates (default: `120`)
+* `CURRENCY_CACHE_SIZE`: Maximum number of cached currency conversion rates (default: `10`)
