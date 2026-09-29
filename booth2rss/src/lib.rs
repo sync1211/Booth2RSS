@@ -2,6 +2,7 @@ pub mod utils;
 use url::Url;
 use scraper::{Html, Selector};
 use std::collections::HashSet;
+use std::sync::LazyLock;
 
 pub mod currency_exchange;
 use currency_exchange::get_exchange_rate;
@@ -24,6 +25,31 @@ pub mod objects {
 const SELF_USER_AGENT: &str = "Booth2Rss";
 const ADULT_COOKIE: &str = "adult=t";
 const ACCEPTED_LANGUAGE: &str = "en-US";
+
+
+// Selectors (lazy init to save resources)
+static NICKNAME_SELECTOR: LazyLock<Selector> = LazyLock::new(|| {
+    Selector::parse("[title='Home']").unwrap()
+});
+static NAME_SELECTOR: LazyLock<Selector> = LazyLock::new(|| {
+    Selector::parse(".shop-name-label").unwrap()
+});
+static DESCRIPTION_SELECTOR: LazyLock<Selector> = LazyLock::new(|| {
+    Selector::parse(".booth-description").unwrap()
+});
+static ICON_SELECTOR: LazyLock<Selector> = LazyLock::new(|| {
+    Selector::parse(".avatar-image").unwrap()
+});
+
+static LAST_PAGE_SELECTOR: LazyLock<Selector> = LazyLock::new(|| {
+    Selector::parse(".last-page").unwrap()
+});
+
+static ITEM_SELECTOR: LazyLock<Selector> = LazyLock::new(|| {
+    Selector::parse("[data-item]").unwrap()
+});
+
+
 
 #[derive(Clone)]
 pub struct BoothClient {
@@ -183,17 +209,10 @@ fn get_background_image(document: &Html, selector: &Selector) -> Option<String> 
 }
 
 fn create_store_from_content(document: &Html, store_url: &str, items: HashSet<BoothItem>) -> BoothStore {
-    let nickname_selector = Selector::parse("[title='Home']").unwrap(); //TODO: Lazy init for these?
-    let nickname = get_element_text(document, &nickname_selector).unwrap_or("(parse error)".to_string());
-
-    let name_selector = Selector::parse(".shop-name-label").unwrap();
-    let name = get_element_text(document,  &name_selector).unwrap_or(nickname.clone());
-
-    let description_selector = Selector::parse(".booth-description").unwrap();
-    let description = get_element_text(document,  &description_selector).unwrap_or("(not found)".to_string());
-
-    let icon_selector = Selector::parse(".avatar-image").unwrap();
-    let icon_url = get_background_image(document,  &icon_selector).unwrap_or("https://booth.pm/favicon.ico".to_string());
+    let nickname = get_element_text(document, &NICKNAME_SELECTOR).unwrap_or("(parse error)".to_string());
+    let name = get_element_text(document,  &NAME_SELECTOR).unwrap_or(nickname.clone());
+    let description = get_element_text(document,  &DESCRIPTION_SELECTOR).unwrap_or("(not found)".to_string());
+    let icon_url = get_background_image(document,  &ICON_SELECTOR).unwrap_or("https://booth.pm/favicon.ico".to_string());
 
     return BoothStore::new(
         name,
@@ -205,9 +224,7 @@ fn create_store_from_content(document: &Html, store_url: &str, items: HashSet<Bo
 }
 
 fn get_max_page_count(document: &Html) -> Option<u32> {
-    let last_page_selector = Selector::parse(".last-page").unwrap();
-
-    let last_page_element_result = document.select(&last_page_selector).next();
+    let last_page_element_result = document.select(&LAST_PAGE_SELECTOR).next();
     let last_page_element = last_page_element_result?;
 
     // Get page number from "href" attribute
@@ -226,11 +243,8 @@ fn get_max_page_count(document: &Html) -> Option<u32> {
 
 fn get_items_from_content(document: &Html) -> Vec<BoothItem> {
     let mut item_list: Vec<BoothItem> = Vec::new();
-    // let mut offset  = 0;
-    // let mut item_result;
 
-    let item_selector = Selector::parse("[data-item]").unwrap();
-    let item_elements = document.select(&item_selector);
+    let item_elements = document.select(&ITEM_SELECTOR);
 
     for element in item_elements {
         let item_data_opt = element.attr("data-item");
