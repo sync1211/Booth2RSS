@@ -4,7 +4,7 @@ COPY ./booth2rss_web /build/booth2rss_web
 COPY ./docker-entry.sh /app/docker-entry.sh
 
 ENV RUST_LOG="Info" 
-ENV BIND_TO="0.0.0.0:8080"
+ENV LISTEN_ADDRESS="0.0.0.0:8080"
 ENV CURRENCY_FALLBACK="JPY"
 ENV STORE_CACHE_MINUTES="15"
 ENV STORE_CACHE_SIZE="50"

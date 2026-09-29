@@ -6,7 +6,7 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug)]
 #[serde(default)]
 pub struct ConfigData {
-    pub bind_address: SocketAddr,
+    pub listen_address: SocketAddr,
     pub currency_fallback: String,
     pub cache_minutes: u64,
     pub cache_size: u64,
@@ -18,7 +18,7 @@ pub struct ConfigData {
 impl Default for ConfigData {
     fn default() -> Self {
         return ConfigData {
-            bind_address: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0,0,0,0)), 8080),
+            listen_address: SocketAddr::new(IpAddr::V4(Ipv4Addr::new(0,0,0,0)), 8080),
             currency_fallback: "JPY".to_string(),
             cache_minutes: 15,
             cache_size: 50,
