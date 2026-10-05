@@ -96,7 +96,7 @@ async fn get_store(store_data: web::Query<StoreParams>, globals: web::Data<AppGl
     // Check URL
     let url = match &store_data.url {
         Some(url) => url.to_owned(),
-        None => return HttpResponse::UnprocessableEntity().body("No url provided".to_string())
+        None => return HttpResponse::UnprocessableEntity().body("No valid url provided".to_string())
     };
 
     if url.is_empty() {
