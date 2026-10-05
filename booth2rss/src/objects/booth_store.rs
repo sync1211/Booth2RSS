@@ -23,7 +23,7 @@ impl BoothStore {
         }
     }
 
-    pub fn as_rss(&self, filter_unavailable: bool, filter_nsfw: bool, vrc_only: bool, ttl: i32) -> Channel {
+    pub fn as_rss(&self, filter_unavailable: bool, filter_nsfw: bool, vrc_only: bool, ttl: u64) -> Channel {
         // Add items 
         let mut items = Vec::new();
         for item in self.items.iter() {

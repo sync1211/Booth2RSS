@@ -19,7 +19,8 @@ struct AppGlobals {
    exc_rate_cache: Cache<String,f32>,
    booth_client: BoothClient,
    fallback_currency_src: String,
-   allow_currency_conversion: bool
+   allow_currency_conversion: bool,
+   ttl_min: u64
 }
 
 #[derive(Deserialize)]
@@ -149,7 +150,12 @@ async fn get_store(store_data: web::Query<StoreParams>, globals: web::Data<AppGl
         convert_prices(&globals.booth_client, &mut store, &globals.fallback_currency_src, target_currency, &globals.exc_rate_cache).await;
     }
 
-    let store_rss = store.as_rss(store_data.filter_unavailable, !store_data.allow_nsfw, store_data.vrc_only, 15);
+    let store_rss = store.as_rss(
+        store_data.filter_unavailable,
+        !store_data.allow_nsfw,
+        store_data.vrc_only,
+        globals.ttl_min //TODO: Reduce by how long the last store was cached
+    );
     
     return HttpResponse::Ok()
         .content_type(ContentType::xml())
@@ -180,6 +186,7 @@ async fn main() -> std::io::Result<()> {
        booth_client: client,
        fallback_currency_src: config_data.currency_fallback,
        allow_currency_conversion: config_data.allow_currency_conversion,
+       ttl_min: config_data.cache_minutes
    };
 
     HttpServer::new(move || {
