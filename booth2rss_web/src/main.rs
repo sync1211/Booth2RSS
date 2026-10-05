@@ -100,7 +100,12 @@ async fn get_store(store_data: web::Query<StoreParams>, globals: web::Data<AppGl
     };
 
     if url.is_empty() {
-        return HttpResponse::UnprocessableEntity().body("No url provided".to_string())
+        return HttpResponse::UnprocessableEntity().body("No url provided".to_string());
+    }
+
+    // Check max pages value
+    if store_data.max_pages == 0 {
+        return HttpResponse::UnprocessableEntity().body("max_pages needs to be >0".to_string());
     }
 
     // Check currency value
