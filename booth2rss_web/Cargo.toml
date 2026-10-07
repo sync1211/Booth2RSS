@@ -12,3 +12,7 @@ serde = "1.0.229"
 serde_json = "1.0.151"
 simple_logger = "5.2.0"
 tokio = "1.53.1"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
