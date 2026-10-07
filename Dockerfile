@@ -13,10 +13,10 @@ RUN cargo test
 
 FROM test AS build-release
 WORKDIR "/build/booth2rss_web"
+ARG RUSTFLAGS
 RUN cargo build --release
 RUN mkdir -p "/app"
 RUN cp "target/release/booth2rss_web" "/app/booth2rss_web"
-RUN cp "config.json" "/app/booth2rss_web/config.json" | true
 
 # FROM build-release AS cleanup
 # WORKDIR "/build/booth2rss_web"
