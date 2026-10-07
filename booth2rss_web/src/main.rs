@@ -152,7 +152,7 @@ async fn get_store(store_data: web::Query<StoreParams>, globals: web::Data<AppGl
 
     // Apply currency conversion
     if globals.allow_currency_conversion && let Some(target_currency) = target_currency {
-        convert_prices(&globals.booth_client, &mut store, &globals.fallback_currency_src, target_currency, &globals.exc_rate_cache).await;
+        convert_prices(&globals.booth_client, &mut store, &globals.fallback_currency_src, &target_currency.to_uppercase(), &globals.exc_rate_cache).await;
     }
 
     let store_rss = store.as_rss(
