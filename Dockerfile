@@ -2,6 +2,8 @@ FROM rust:slim AS base
 COPY ./booth2rss /build/booth2rss
 COPY ./booth2rss_web /build/booth2rss_web
 COPY ./docker-entry.sh /app/docker-entry.sh
+RUN touch /app/config.json
+RUN chown 1001 /app/config.json
 
 #FROM base AS build
 #WORKDIR "/build/booth2rss_web"
@@ -33,6 +35,7 @@ ENV ALLOW_CURRENCY_CONVERSION="true"
 ENV CURRENCY_CACHE_MINUTES="120"
 ENV CURRENCY_CACHE_SIZE="10"
 
+USER 1001:1001
 EXPOSE 8080
 WORKDIR "/app/"
 ENTRYPOINT ["/app/docker-entry.sh"]
