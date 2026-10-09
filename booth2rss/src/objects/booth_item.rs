@@ -1,6 +1,6 @@
 use std::fmt;
 use crate::{objects::booth_category::BoothCategory, utils::is_valid_currency_short};
-use rss::{EnclosureBuilder, GuidBuilder, Item, ItemBuilder};
+use rss::{GuidBuilder, Item, ItemBuilder};
 use serde::{Deserialize};
 use std::hash::{Hash,Hasher};
 
@@ -88,12 +88,9 @@ impl BoothItem {
             // Any change in price or availability will be treated as a new entry by RSS readers
             .value(self.get_state_id())
             .build();
-        let enclosure = EnclosureBuilder::default()
-            .url(thumbnail_url)
-            .build();
         let item = ItemBuilder::default()
+            .content(format!("<img src=\"{thumbnail_url}\">"))
             .description(self.get_description())
-            .enclosure(enclosure)
             .title(display_name)
             .link(self.url.to_string())
             .guid(id)
