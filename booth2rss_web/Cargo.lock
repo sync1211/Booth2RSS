@@ -301,7 +301,7 @@ dependencies = [
 
 [[package]]
 name = "booth2rss"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "log",
  "reqwest",
@@ -314,7 +314,7 @@ dependencies = [
 
 [[package]]
 name = "booth2rss_web"
-version = "0.1.0"
+version = "0.2.1"
 dependencies = [
  "actix-web",
  "booth2rss",
