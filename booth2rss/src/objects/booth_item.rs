@@ -59,15 +59,13 @@ impl BoothItem {
 	}
 
     fn get_state_id(&self) -> String {
-        let mut state_id = format!("{};{}", self.id, self.price);
+        let mut state_id = format!("{};{}:", self.id, self.price);
         
-        if self.is_sold_out {
-            state_id.push_str(";EOS");
-        }
+        if self.is_sold_out    { state_id.push('S'); }
+        if self.is_placeholder { state_id.push('P'); }
+        if self.is_end_of_sale { state_id.push('E'); }
 
-        if self.is_placeholder {
-            state_id.push_str(";PH");
-        }
+        //NOTE: Always add new state ID flags at the end to avoid marking unchanged items as changed
 
         return state_id;
     }
