@@ -10,7 +10,8 @@ RUN chown 1001 /app/config.json
 
 FROM base AS test
 WORKDIR "/build/booth2rss"
-RUN cargo test
+ARG RUSTFLAGS
+RUN cargo test --release
 
 FROM test AS build-release
 WORKDIR "/build/booth2rss"
