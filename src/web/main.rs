@@ -4,7 +4,6 @@ use moka::future::Cache;
 use actix_web::{App, HttpResponse, HttpServer, get, http::StatusCode, web, http::header::ContentType};
 use serde::Deserialize;
 
-extern crate booth2rss;
 use booth2rss::{BoothClient, objects::booth_store::BoothStore, errors::RequestError};
 use booth2rss::utils::is_valid_currency_short;
 

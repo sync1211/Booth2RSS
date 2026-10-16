@@ -1,0 +1,9 @@
+{
+    "listen_address": "0.0.0.0:8080",
+    "currency_fallback": "JPY",
+    "cache_minutes": 15,
+    "cache_size": 50,
+    "allow_currency_conversion": true,
+    "currency_conversion_cache_size": 10,
+    "currency_conversion_cache_ttl_minutes": 120
+}

@@ -27,7 +27,9 @@
 **/secrets.dev.yaml
 **/values.dev.yaml
 **/target
-/bin
-/target
-LICENSE
+**/bin
+target
+LICENSE.md
 README.md
+config.json
+config.json.example

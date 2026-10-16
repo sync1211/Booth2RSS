@@ -1,6 +1,5 @@
 use std::env;
 
-extern crate booth2rss;
 use booth2rss::BoothClient;
 use booth2rss::errors::RequestError;
 use booth2rss::objects::booth_store::BoothStore;
