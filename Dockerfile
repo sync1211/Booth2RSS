@@ -1,30 +1,30 @@
+###########################
+#          Build          #
+###########################
 FROM rust:slim AS base
 COPY . /build/booth2rss
-COPY ./docker-entry.sh /app/docker-entry.sh
-RUN touch /app/config.json
-RUN chown 1001 /app/config.json
-
-#FROM base AS build
-#WORKDIR "/build/booth2rss"
-#RUN cargo build
 
 FROM base AS test
 WORKDIR "/build/booth2rss"
 ARG RUSTFLAGS
 RUN cargo test --release
 
-FROM test AS build-release
+FROM test AS build
 WORKDIR "/build/booth2rss"
 ARG RUSTFLAGS
 RUN cargo build --release --bin booth2rss_web
 RUN mkdir -p "/app"
 RUN cp "target/release/booth2rss_web" "/app/booth2rss_web"
 
-# FROM build-release AS cleanup
-# WORKDIR "/build/booth2rss"
-# RUN cargo clean
 
-FROM build-release AS run
+###########################
+#         Runtime         #
+###########################
+FROM alpine:latest
+COPY --from=build "/build/booth2rss/target/release/booth2rss_web" "/app/booth2rss_web"
+COPY ./docker-entry.sh /app/docker-entry.sh
+RUN touch /app/config.json
+RUN chown 1001 /app/config.json
 
 ENV RUST_LOG="Info" 
 ENV LISTEN_ADDRESS="0.0.0.0:8080"
