@@ -59,17 +59,13 @@ impl BoothItem {
 	}
 
     fn get_state_id(&self) -> String {
-        let mut state_id = format!("{};{}", self.id, self.price);
-        
-        if self.is_sold_out {
-            state_id.push_str(";EOS");
-        }
-
-        if self.is_placeholder {
-            state_id.push_str(";PH");
-        }
-
-        return state_id;
+        return format!("{};{};{}{}{}", 
+            self.id,
+            self.price,
+            self.is_sold_out as u8,
+            self.is_placeholder as u8,
+            self.is_end_of_sale as u8
+        );
     }
 
     pub fn as_rss(&self) -> Item {
