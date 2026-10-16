@@ -30,7 +30,14 @@ impl Default for ConfigData {
 }
 
 pub fn read_config(path: &str) -> ConfigData {
-    if !fs::exists(path).unwrap_or(false) {
+    let config_exists = fs::exists(path);
+
+    if let Err(file_access_error) = config_exists {
+        log::warn!("Unable to access config file: {file_access_error}");
+        return ConfigData::default();
+    }
+
+    if !config_exists.unwrap() {
         log::warn!("No config file found at '{path}'. Using default values!");
         return ConfigData::default();
     }
