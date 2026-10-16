@@ -1,4 +1,4 @@
-use std::fmt;
+use std::{fmt,error};
 
 #[derive(Debug)]
 pub enum RequestError {
@@ -8,6 +8,8 @@ pub enum RequestError {
     NetworkError(String),
     ParseError(String),
 }
+
+impl error::Error for RequestError {}
 
 impl fmt::Display for RequestError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
