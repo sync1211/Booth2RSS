@@ -234,7 +234,7 @@ fn get_max_page_count(document: &Html) -> Option<u32> {
     // Convert to u32
     let parse_result = last_page_str.parse::<u32>();
     if let Err(parse_err) = parse_result {
-        log::warn!("Unable to get page count: Could not parse '{}' as i32: {}", last_page_str, parse_err);
+        log::warn!("Unable to get page count: Could not parse '{}' as u32: {}", last_page_str, parse_err);
         return None;
     }
 

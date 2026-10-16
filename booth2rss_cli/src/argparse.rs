@@ -36,7 +36,7 @@ pub fn parse_arguments(args: Args) -> Option<CmdParams> {
                     let max_pages = match max_pages_str.parse::<u32>() {
                         Ok(max) => max,
                         Err(e) => {
-                            log::error!("Unable to parse value for --max-pages '{max_pages_str}' as i32: {e}");
+                            log::error!("Unable to parse value for --max-pages '{max_pages_str}' as u32: {e}");
                             return None;
                         }
                     };
