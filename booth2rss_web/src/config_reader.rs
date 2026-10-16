@@ -34,15 +34,18 @@ pub fn read_config(path: &str) -> ConfigData {
         log::warn!("No config file found at '{path}'. Using default values!");
         return ConfigData::default();
     }
-    
+
     log::debug!("Reading config file...");
     let contents = fs::read_to_string(path)
         .expect("Unable to read config file!");
 
     log::debug!("Pasing configuration...");
-    let config_data: ConfigData = serde_json::from_str(&contents)
-        .unwrap_or_default();
-    
+    let config_data_result = serde_json::from_str(&contents);
+    if let Err(e) = config_data_result {
+        log::warn!("Failed to parse config data: {e}");
+        return ConfigData::default();
+    }
+
     log::debug!("Configuration loaded!");
-    return config_data;
+    return config_data_result.unwrap();
 }
