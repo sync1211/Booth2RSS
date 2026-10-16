@@ -12,6 +12,7 @@ mod config_reader;
 use crate::config_reader::read_config;
 
 const CONFIG_PATH: &str = "./config.json";
+const MAX_STORE_PAGES: u32 = 50; // Are there stores with >50 pages? The client probably gets rate limited before that...
 
 #[derive(Clone)]
 struct AppGlobals {
@@ -106,6 +107,10 @@ async fn get_store(store_data: web::Query<StoreParams>, globals: web::Data<AppGl
     // Check max pages value
     if store_data.max_pages == 0 {
         return HttpResponse::UnprocessableEntity().body("max_pages needs to be >0".to_string());
+    }
+
+    if store_data.max_pages > MAX_STORE_PAGES {
+        return HttpResponse::UnprocessableEntity().body(format!("max_pages may not be >{MAX_STORE_PAGES}"));
     }
 
     // Check currency value
