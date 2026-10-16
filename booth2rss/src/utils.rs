@@ -24,10 +24,10 @@ mod tests {
         let input_non_ascii = "💲US";
         let input_non_alphabetical = "$US";
 
-        assert_eq!(true, is_valid_currency_short(&input_valid));
-        assert_eq!(false, is_valid_currency_short(&input_short));
-        assert_eq!(false, is_valid_currency_short(&input_long));
-        assert_eq!(false, is_valid_currency_short(&input_non_ascii));
-        assert_eq!(false, is_valid_currency_short(&input_non_alphabetical));
+        assert!(is_valid_currency_short(&input_valid));
+        assert!(! is_valid_currency_short(&input_short));
+        assert!(! is_valid_currency_short(&input_long));
+        assert!(! is_valid_currency_short(&input_non_ascii));
+        assert!(! is_valid_currency_short(&input_non_alphabetical));
     }
 }
