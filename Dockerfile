@@ -20,7 +20,7 @@ RUN cp "target/release/booth2rss_web" "/app/booth2rss_web"
 ###########################
 #         Runtime         #
 ###########################
-FROM alpine:latest
+FROM rust:slim
 COPY --from=build "/build/booth2rss/target/release/booth2rss_web" "/app/booth2rss_web"
 COPY ./docker-entry.sh /app/docker-entry.sh
 RUN touch /app/config.json
